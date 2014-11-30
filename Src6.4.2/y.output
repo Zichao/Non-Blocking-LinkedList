@@ -1,0 +1,10675 @@
+   0  $accept : program $end
+
+   1  program : units
+
+   2  units : unit
+   3        | units unit
+
+   4  unit : proc
+   5       | init
+   6       | claim
+   7       | ltl
+   8       | events
+   9       | one_decl
+  10       | utype
+  11       | c_fcts
+  12       | ns
+  13       | semi
+  14       | error
+
+  15  l_par : '('
+
+  16  r_par : ')'
+
+  17  $$1 :
+
+  18  $$2 :
+
+  19  proc : inst proctype NAME $$1 l_par decl r_par $$2 Opt_priority Opt_enabler body
+
+  20  proctype : PROCTYPE
+  21           | D_PROCTYPE
+
+  22  inst :
+  23       | ACTIVE
+  24       | ACTIVE '[' const_expr ']'
+  25       | ACTIVE '[' NAME ']'
+
+  26  $$3 :
+
+  27  init : INIT $$3 Opt_priority body
+
+  28  $$4 :
+
+  29  ltl : LTL optname2 $$4 ltl_body
+
+  30  ltl_body : '{' full_expr OS '}'
+  31           | error
+
+  32  $$5 :
+
+  33  claim : CLAIM optname $$5 body
+
+  34  optname :
+  35          | NAME
+
+  36  optname2 :
+  37           | NAME
+
+  38  $$6 :
+
+  39  events : TRACE $$6 body
+
+  40  $$7 :
+
+  41  utype : TYPEDEF NAME '{' $$7 decl_lst '}'
+
+  42  nm : NAME
+  43     | INAME
+
+  44  $$8 :
+
+  45  ns : INLINE nm l_par $$8 args r_par
+
+  46  c_fcts : ccode
+  47         | cstate
+
+  48  cstate : C_STATE STRING STRING
+  49         | C_TRACK STRING STRING
+  50         | C_STATE STRING STRING STRING
+  51         | C_TRACK STRING STRING STRING
+
+  52  ccode : C_CODE
+  53        | C_DECL
+
+  54  cexpr : C_EXPR
+
+  55  $$9 :
+
+  56  $$10 :
+
+  57  body : '{' $$9 sequence OS $$10 '}'
+
+  58  sequence : step
+  59           | sequence MS step
+
+  60  step : one_decl
+  61       | XU vref_lst
+  62       | NAME ':' one_decl
+  63       | NAME ':' XU
+  64       | stmnt
+
+  65  $$11 :
+
+  66  step : stmnt UNLESS $$11 stmnt
+
+  67  vis :
+  68      | HIDDEN
+  69      | SHOW
+  70      | ISLOCAL
+
+  71  asgn :
+  72       | ASGN
+
+  73  one_decl : vis TYPE var_list
+  74           | vis UNAME var_list
+  75           | vis TYPE asgn '{' nlst '}'
+
+  76  decl_lst : one_decl
+  77           | one_decl SEMI decl_lst
+
+  78  decl :
+  79       | decl_lst
+
+  80  vref_lst : varref
+  81           | varref ',' vref_lst
+
+  82  var_list : ivar
+  83           | ivar ',' var_list
+
+  84  c_list : CONST
+  85         | CONST ',' c_list
+
+  86  ivar : vardcl
+  87       | vardcl ASGN '{' c_list '}'
+  88       | vardcl ASGN expr
+  89       | vardcl ASGN ch_init
+
+  90  ch_init : '[' const_expr ']' OF '{' typ_list '}'
+
+  91  vardcl : NAME
+  92         | NAME ':' CONST
+  93         | NAME '[' const_expr ']'
+
+  94  varref : cmpnd
+
+  95  pfld : NAME
+
+  96  $$12 :
+
+  97  pfld : NAME $$12 '[' expr ']'
+
+  98  $$13 :
+
+  99  cmpnd : pfld $$13 sfld
+
+ 100  sfld :
+ 101       | '.' cmpnd
+
+ 102  stmnt : Special
+ 103        | Stmnt
+
+ 104  $$14 :
+
+ 105  for_pre : FOR l_par $$14 varref
+
+ 106  for_post : '{' sequence OS '}'
+
+ 107  $$15 :
+
+ 108  Special : varref RCV $$15 rargs
+
+ 109  $$16 :
+
+ 110  Special : varref SND $$16 margs
+
+ 111  $$17 :
+
+ 112  Special : for_pre ':' expr DOTDOT expr r_par $$17 for_post
+
+ 113  $$18 :
+
+ 114  Special : for_pre IN varref r_par $$18 for_post
+ 115          | SELECT l_par varref ':' expr DOTDOT expr r_par
+ 116          | IF options FI
+
+ 117  $$19 :
+
+ 118  Special : DO $$19 options OD
+ 119          | BREAK
+ 120          | GOTO NAME
+ 121          | NAME ':' stmnt
+ 122          | NAME ':'
+ 123          | error
+
+ 124  Stmnt : varref ASGN full_expr
+ 125        | varref INCR
+ 126        | varref DECR
+ 127        | SET_P l_par two_args r_par
+
+ 128  $$20 :
+
+ 129  Stmnt : PRINT l_par STRING $$20 prargs r_par
+ 130        | PRINTM l_par varref r_par
+ 131        | PRINTM l_par CONST r_par
+ 132        | ASSERT full_expr
+ 133        | ccode
+
+ 134  $$21 :
+
+ 135  Stmnt : varref R_RCV $$21 rargs
+
+ 136  $$22 :
+
+ 137  Stmnt : varref RCV $$22 LT rargs GT
+
+ 138  $$23 :
+
+ 139  Stmnt : varref R_RCV $$23 LT rargs GT
+
+ 140  $$24 :
+
+ 141  Stmnt : varref O_SND $$24 margs
+ 142        | full_expr
+ 143        | ELSE
+
+ 144  $$25 :
+
+ 145  Stmnt : ATOMIC '{' $$25 sequence OS '}'
+
+ 146  $$26 :
+
+ 147  Stmnt : D_STEP '{' $$26 sequence OS '}'
+
+ 148  $$27 :
+
+ 149  Stmnt : '{' $$27 sequence OS '}'
+
+ 150  $$28 :
+
+ 151  $$29 :
+
+ 152  Stmnt : INAME $$28 l_par args r_par $$29 Stmnt
+
+ 153  $$30 :
+
+ 154  $$31 :
+
+ 155  Stmnt : varref ASGN INAME $$30 l_par args r_par $$31 Stmnt
+ 156        | RETURN full_expr
+
+ 157  options : option
+ 158          | option options
+
+ 159  $$32 :
+
+ 160  option : SEP $$32 sequence OS
+
+ 161  OS :
+ 162     | semi
+
+ 163  semi : SEMI
+ 164       | ARROW
+
+ 165  MS : semi
+ 166     | MS semi
+
+ 167  aname : NAME
+ 168        | PNAME
+
+ 169  const_expr : CONST
+ 170             | '-' const_expr
+ 171             | l_par const_expr r_par
+ 172             | const_expr '+' const_expr
+ 173             | const_expr '-' const_expr
+ 174             | const_expr '*' const_expr
+ 175             | const_expr '/' const_expr
+ 176             | const_expr '%' const_expr
+
+ 177  expr : l_par expr r_par
+ 178       | expr '+' expr
+ 179       | expr '-' expr
+ 180       | expr '*' expr
+ 181       | expr '/' expr
+ 182       | expr '%' expr
+ 183       | expr '&' expr
+ 184       | expr '^' expr
+ 185       | expr '|' expr
+ 186       | expr GT expr
+ 187       | expr LT expr
+ 188       | expr GE expr
+ 189       | expr LE expr
+ 190       | expr EQ expr
+ 191       | expr NE expr
+ 192       | expr AND expr
+ 193       | expr OR expr
+ 194       | expr LSHIFT expr
+ 195       | expr RSHIFT expr
+ 196       | '~' expr
+ 197       | '-' expr
+ 198       | SND expr
+ 199       | l_par expr ARROW expr ':' expr r_par
+
+ 200  $$33 :
+
+ 201  expr : RUN aname $$33 l_par args r_par Opt_priority
+ 202       | LEN l_par varref r_par
+ 203       | ENABLED l_par expr r_par
+ 204       | GET_P l_par expr r_par
+
+ 205  $$34 :
+
+ 206  expr : varref RCV $$34 '[' rargs ']'
+
+ 207  $$35 :
+
+ 208  expr : varref R_RCV $$35 '[' rargs ']'
+ 209       | varref
+ 210       | cexpr
+ 211       | CONST
+ 212       | TIMEOUT
+ 213       | NONPROGRESS
+ 214       | PC_VAL l_par expr r_par
+ 215       | PNAME '[' expr ']' '@' NAME
+ 216       | PNAME '[' expr ']' ':' pfld
+ 217       | PNAME '@' NAME
+ 218       | PNAME ':' pfld
+ 219       | ltl_expr
+
+ 220  Opt_priority :
+ 221               | PRIORITY CONST
+
+ 222  full_expr : expr
+ 223            | Expr
+
+ 224  ltl_expr : expr UNTIL expr
+ 225           | expr RELEASE expr
+ 226           | expr WEAK_UNTIL expr
+ 227           | expr IMPLIES expr
+ 228           | expr EQUIV expr
+ 229           | NEXT expr
+ 230           | ALWAYS expr
+ 231           | EVENTUALLY expr
+
+ 232  Expr : Probe
+ 233       | l_par Expr r_par
+ 234       | Expr AND Expr
+ 235       | Expr AND expr
+ 236       | expr AND Expr
+ 237       | Expr OR Expr
+ 238       | Expr OR expr
+ 239       | expr OR Expr
+
+ 240  Probe : FULL l_par varref r_par
+ 241        | NFULL l_par varref r_par
+ 242        | EMPTY l_par varref r_par
+ 243        | NEMPTY l_par varref r_par
+
+ 244  Opt_enabler :
+ 245              | PROVIDED l_par full_expr r_par
+ 246              | PROVIDED error
+
+ 247  basetype : TYPE
+ 248           | UNAME
+ 249           | error
+
+ 250  typ_list : basetype
+ 251           | basetype ',' typ_list
+
+ 252  two_args : expr ',' expr
+
+ 253  args :
+ 254       | arg
+
+ 255  prargs :
+ 256         | ',' arg
+
+ 257  margs : arg
+ 258        | expr l_par arg r_par
+
+ 259  arg : expr
+ 260      | expr ',' arg
+
+ 261  rarg : varref
+ 262       | EVAL l_par expr r_par
+ 263       | CONST
+ 264       | '-' CONST
+
+ 265  rargs : rarg
+ 266        | rarg ',' rargs
+ 267        | rarg l_par rargs r_par
+ 268        | l_par rargs r_par
+
+ 269  nlst : NAME
+ 270       | nlst NAME
+ 271       | nlst ','
+
+state 0
+	$accept : . program $end  (0)
+	inst : .  (22)
+	vis : .  (67)
+
+	error  shift 1
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_STATE  shift 4
+	C_TRACK  shift 5
+	TYPEDEF  shift 6
+	INLINE  shift 7
+	SEMI  shift 8
+	ARROW  shift 9
+	ACTIVE  shift 10
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	CLAIM  shift 14
+	TRACE  shift 15
+	INIT  shift 16
+	LTL  shift 17
+	PROCTYPE  reduce 22
+	D_PROCTYPE  reduce 22
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	program  goto 18
+	units  goto 19
+	unit  goto 20
+	proc  goto 21
+	init  goto 22
+	claim  goto 23
+	ltl  goto 24
+	events  goto 25
+	one_decl  goto 26
+	utype  goto 27
+	c_fcts  goto 28
+	ns  goto 29
+	semi  goto 30
+	inst  goto 31
+	ccode  goto 32
+	cstate  goto 33
+	vis  goto 34
+
+
+state 1
+	unit : error .  (14)
+
+	.  reduce 14
+
+
+state 2
+	ccode : C_CODE .  (52)
+
+	.  reduce 52
+
+
+state 3
+	ccode : C_DECL .  (53)
+
+	.  reduce 53
+
+
+state 4
+	cstate : C_STATE . STRING STRING  (48)
+	cstate : C_STATE . STRING STRING STRING  (50)
+
+	STRING  shift 35
+	.  error
+
+
+state 5
+	cstate : C_TRACK . STRING STRING  (49)
+	cstate : C_TRACK . STRING STRING STRING  (51)
+
+	STRING  shift 36
+	.  error
+
+
+state 6
+	utype : TYPEDEF . NAME '{' $$7 decl_lst '}'  (41)
+
+	NAME  shift 37
+	.  error
+
+
+state 7
+	ns : INLINE . nm l_par $$8 args r_par  (45)
+
+	NAME  shift 38
+	INAME  shift 39
+	.  error
+
+	nm  goto 40
+
+
+state 8
+	semi : SEMI .  (163)
+
+	.  reduce 163
+
+
+state 9
+	semi : ARROW .  (164)
+
+	.  reduce 164
+
+
+state 10
+	inst : ACTIVE .  (23)
+	inst : ACTIVE . '[' const_expr ']'  (24)
+	inst : ACTIVE . '[' NAME ']'  (25)
+
+	'['  shift 41
+	PROCTYPE  reduce 23
+	D_PROCTYPE  reduce 23
+
+
+state 11
+	vis : HIDDEN .  (68)
+
+	.  reduce 68
+
+
+state 12
+	vis : SHOW .  (69)
+
+	.  reduce 69
+
+
+state 13
+	vis : ISLOCAL .  (70)
+
+	.  reduce 70
+
+
+state 14
+	claim : CLAIM . optname $$5 body  (33)
+	optname : .  (34)
+
+	NAME  shift 42
+	'{'  reduce 34
+
+	optname  goto 43
+
+
+state 15
+	events : TRACE . $$6 body  (39)
+	$$6 : .  (38)
+
+	.  reduce 38
+
+	$$6  goto 44
+
+
+state 16
+	init : INIT . $$3 Opt_priority body  (27)
+	$$3 : .  (26)
+
+	.  reduce 26
+
+	$$3  goto 45
+
+
+state 17
+	ltl : LTL . optname2 $$4 ltl_body  (29)
+	optname2 : .  (36)
+
+	NAME  shift 46
+	error  reduce 36
+	'{'  reduce 36
+
+	optname2  goto 47
+
+
+state 18
+	$accept : program . $end  (0)
+
+	$end  accept
+
+
+state 19
+	program : units .  (1)
+	units : units . unit  (3)
+	inst : .  (22)
+	vis : .  (67)
+
+	error  shift 1
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_STATE  shift 4
+	C_TRACK  shift 5
+	TYPEDEF  shift 6
+	INLINE  shift 7
+	SEMI  shift 8
+	ARROW  shift 9
+	ACTIVE  shift 10
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	CLAIM  shift 14
+	TRACE  shift 15
+	INIT  shift 16
+	LTL  shift 17
+	$end  reduce 1
+	PROCTYPE  reduce 22
+	D_PROCTYPE  reduce 22
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	unit  goto 48
+	proc  goto 21
+	init  goto 22
+	claim  goto 23
+	ltl  goto 24
+	events  goto 25
+	one_decl  goto 26
+	utype  goto 27
+	c_fcts  goto 28
+	ns  goto 29
+	semi  goto 30
+	inst  goto 31
+	ccode  goto 32
+	cstate  goto 33
+	vis  goto 34
+
+
+state 20
+	units : unit .  (2)
+
+	.  reduce 2
+
+
+state 21
+	unit : proc .  (4)
+
+	.  reduce 4
+
+
+state 22
+	unit : init .  (5)
+
+	.  reduce 5
+
+
+state 23
+	unit : claim .  (6)
+
+	.  reduce 6
+
+
+state 24
+	unit : ltl .  (7)
+
+	.  reduce 7
+
+
+state 25
+	unit : events .  (8)
+
+	.  reduce 8
+
+
+state 26
+	unit : one_decl .  (9)
+
+	.  reduce 9
+
+
+state 27
+	unit : utype .  (10)
+
+	.  reduce 10
+
+
+state 28
+	unit : c_fcts .  (11)
+
+	.  reduce 11
+
+
+state 29
+	unit : ns .  (12)
+
+	.  reduce 12
+
+
+state 30
+	unit : semi .  (13)
+
+	.  reduce 13
+
+
+state 31
+	proc : inst . proctype NAME $$1 l_par decl r_par $$2 Opt_priority Opt_enabler body  (19)
+
+	PROCTYPE  shift 49
+	D_PROCTYPE  shift 50
+	.  error
+
+	proctype  goto 51
+
+
+state 32
+	c_fcts : ccode .  (46)
+
+	.  reduce 46
+
+
+state 33
+	c_fcts : cstate .  (47)
+
+	.  reduce 47
+
+
+state 34
+	one_decl : vis . TYPE var_list  (73)
+	one_decl : vis . UNAME var_list  (74)
+	one_decl : vis . TYPE asgn '{' nlst '}'  (75)
+
+	TYPE  shift 52
+	UNAME  shift 53
+	.  error
+
+
+state 35
+	cstate : C_STATE STRING . STRING  (48)
+	cstate : C_STATE STRING . STRING STRING  (50)
+
+	STRING  shift 54
+	.  error
+
+
+state 36
+	cstate : C_TRACK STRING . STRING  (49)
+	cstate : C_TRACK STRING . STRING STRING  (51)
+
+	STRING  shift 55
+	.  error
+
+
+state 37
+	utype : TYPEDEF NAME . '{' $$7 decl_lst '}'  (41)
+
+	'{'  shift 56
+	.  error
+
+
+state 38
+	nm : NAME .  (42)
+
+	.  reduce 42
+
+
+state 39
+	nm : INAME .  (43)
+
+	.  reduce 43
+
+
+state 40
+	ns : INLINE nm . l_par $$8 args r_par  (45)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 58
+
+
+state 41
+	inst : ACTIVE '[' . const_expr ']'  (24)
+	inst : ACTIVE '[' . NAME ']'  (25)
+
+	CONST  shift 59
+	NAME  shift 60
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 63
+
+
+state 42
+	optname : NAME .  (35)
+
+	.  reduce 35
+
+
+state 43
+	claim : CLAIM optname . $$5 body  (33)
+	$$5 : .  (32)
+
+	.  reduce 32
+
+	$$5  goto 64
+
+
+state 44
+	events : TRACE $$6 . body  (39)
+
+	'{'  shift 65
+	.  error
+
+	body  goto 66
+
+
+state 45
+	init : INIT $$3 . Opt_priority body  (27)
+	Opt_priority : .  (220)
+
+	PRIORITY  shift 67
+	'{'  reduce 220
+
+	Opt_priority  goto 68
+
+
+state 46
+	optname2 : NAME .  (37)
+
+	.  reduce 37
+
+
+state 47
+	ltl : LTL optname2 . $$4 ltl_body  (29)
+	$$4 : .  (28)
+
+	.  reduce 28
+
+	$$4  goto 69
+
+
+state 48
+	units : units unit .  (3)
+
+	.  reduce 3
+
+
+state 49
+	proctype : PROCTYPE .  (20)
+
+	.  reduce 20
+
+
+state 50
+	proctype : D_PROCTYPE .  (21)
+
+	.  reduce 21
+
+
+state 51
+	proc : inst proctype . NAME $$1 l_par decl r_par $$2 Opt_priority Opt_enabler body  (19)
+
+	NAME  shift 70
+	.  error
+
+
+state 52
+	one_decl : vis TYPE . var_list  (73)
+	one_decl : vis TYPE . asgn '{' nlst '}'  (75)
+	asgn : .  (71)
+
+	NAME  shift 71
+	ASGN  shift 72
+	'{'  reduce 71
+
+	asgn  goto 73
+	var_list  goto 74
+	ivar  goto 75
+	vardcl  goto 76
+
+
+state 53
+	one_decl : vis UNAME . var_list  (74)
+
+	NAME  shift 71
+	.  error
+
+	var_list  goto 77
+	ivar  goto 75
+	vardcl  goto 76
+
+
+state 54
+	cstate : C_STATE STRING STRING .  (48)
+	cstate : C_STATE STRING STRING . STRING  (50)
+
+	STRING  shift 78
+	$end  reduce 48
+	error  reduce 48
+	C_CODE  reduce 48
+	C_DECL  reduce 48
+	C_STATE  reduce 48
+	C_TRACK  reduce 48
+	TYPEDEF  reduce 48
+	INLINE  reduce 48
+	SEMI  reduce 48
+	ARROW  reduce 48
+	ACTIVE  reduce 48
+	PROCTYPE  reduce 48
+	D_PROCTYPE  reduce 48
+	HIDDEN  reduce 48
+	SHOW  reduce 48
+	ISLOCAL  reduce 48
+	TYPE  reduce 48
+	UNAME  reduce 48
+	CLAIM  reduce 48
+	TRACE  reduce 48
+	INIT  reduce 48
+	LTL  reduce 48
+
+
+state 55
+	cstate : C_TRACK STRING STRING .  (49)
+	cstate : C_TRACK STRING STRING . STRING  (51)
+
+	STRING  shift 79
+	$end  reduce 49
+	error  reduce 49
+	C_CODE  reduce 49
+	C_DECL  reduce 49
+	C_STATE  reduce 49
+	C_TRACK  reduce 49
+	TYPEDEF  reduce 49
+	INLINE  reduce 49
+	SEMI  reduce 49
+	ARROW  reduce 49
+	ACTIVE  reduce 49
+	PROCTYPE  reduce 49
+	D_PROCTYPE  reduce 49
+	HIDDEN  reduce 49
+	SHOW  reduce 49
+	ISLOCAL  reduce 49
+	TYPE  reduce 49
+	UNAME  reduce 49
+	CLAIM  reduce 49
+	TRACE  reduce 49
+	INIT  reduce 49
+	LTL  reduce 49
+
+
+state 56
+	utype : TYPEDEF NAME '{' . $$7 decl_lst '}'  (41)
+	$$7 : .  (40)
+
+	.  reduce 40
+
+	$$7  goto 80
+
+
+state 57
+	l_par : '(' .  (15)
+
+	.  reduce 15
+
+
+state 58
+	ns : INLINE nm l_par . $$8 args r_par  (45)
+	$$8 : .  (44)
+
+	.  reduce 44
+
+	$$8  goto 81
+
+
+state 59
+	const_expr : CONST .  (169)
+
+	.  reduce 169
+
+
+state 60
+	inst : ACTIVE '[' NAME . ']'  (25)
+
+	']'  shift 82
+	.  error
+
+
+state 61
+	const_expr : '-' . const_expr  (170)
+
+	CONST  shift 59
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 83
+
+
+state 62
+	const_expr : l_par . const_expr r_par  (171)
+
+	CONST  shift 59
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 84
+
+
+state 63
+	inst : ACTIVE '[' const_expr . ']'  (24)
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+
+	'+'  shift 85
+	'-'  shift 86
+	'*'  shift 87
+	'/'  shift 88
+	'%'  shift 89
+	']'  shift 90
+	.  error
+
+
+state 64
+	claim : CLAIM optname $$5 . body  (33)
+
+	'{'  shift 65
+	.  error
+
+	body  goto 91
+
+
+state 65
+	body : '{' . $$9 sequence OS $$10 '}'  (57)
+	$$9 : .  (55)
+
+	.  reduce 55
+
+	$$9  goto 92
+
+
+state 66
+	events : TRACE $$6 body .  (39)
+
+	.  reduce 39
+
+
+state 67
+	Opt_priority : PRIORITY . CONST  (221)
+
+	CONST  shift 93
+	.  error
+
+
+state 68
+	init : INIT $$3 Opt_priority . body  (27)
+
+	'{'  shift 65
+	.  error
+
+	body  goto 94
+
+
+state 69
+	ltl : LTL optname2 $$4 . ltl_body  (29)
+
+	error  shift 95
+	'{'  shift 96
+	.  error
+
+	ltl_body  goto 97
+
+
+state 70
+	proc : inst proctype NAME . $$1 l_par decl r_par $$2 Opt_priority Opt_enabler body  (19)
+	$$1 : .  (17)
+
+	.  reduce 17
+
+	$$1  goto 98
+
+
+state 71
+	vardcl : NAME .  (91)
+	vardcl : NAME . ':' CONST  (92)
+	vardcl : NAME . '[' const_expr ']'  (93)
+
+	'['  shift 99
+	':'  shift 100
+	$end  reduce 91
+	error  reduce 91
+	C_CODE  reduce 91
+	C_DECL  reduce 91
+	C_STATE  reduce 91
+	C_TRACK  reduce 91
+	TYPEDEF  reduce 91
+	INLINE  reduce 91
+	SEMI  reduce 91
+	ARROW  reduce 91
+	FI  reduce 91
+	OD  reduce 91
+	SEP  reduce 91
+	ACTIVE  reduce 91
+	PROCTYPE  reduce 91
+	D_PROCTYPE  reduce 91
+	HIDDEN  reduce 91
+	SHOW  reduce 91
+	ISLOCAL  reduce 91
+	TYPE  reduce 91
+	UNAME  reduce 91
+	CLAIM  reduce 91
+	TRACE  reduce 91
+	INIT  reduce 91
+	LTL  reduce 91
+	ASGN  reduce 91
+	')'  reduce 91
+	'}'  reduce 91
+	','  reduce 91
+
+
+state 72
+	asgn : ASGN .  (72)
+
+	.  reduce 72
+
+
+state 73
+	one_decl : vis TYPE asgn . '{' nlst '}'  (75)
+
+	'{'  shift 101
+	.  error
+
+
+state 74
+	one_decl : vis TYPE var_list .  (73)
+
+	.  reduce 73
+
+
+state 75
+	var_list : ivar .  (82)
+	var_list : ivar . ',' var_list  (83)
+
+	','  shift 102
+	$end  reduce 82
+	error  reduce 82
+	C_CODE  reduce 82
+	C_DECL  reduce 82
+	C_STATE  reduce 82
+	C_TRACK  reduce 82
+	TYPEDEF  reduce 82
+	INLINE  reduce 82
+	SEMI  reduce 82
+	ARROW  reduce 82
+	FI  reduce 82
+	OD  reduce 82
+	SEP  reduce 82
+	ACTIVE  reduce 82
+	PROCTYPE  reduce 82
+	D_PROCTYPE  reduce 82
+	HIDDEN  reduce 82
+	SHOW  reduce 82
+	ISLOCAL  reduce 82
+	TYPE  reduce 82
+	UNAME  reduce 82
+	CLAIM  reduce 82
+	TRACE  reduce 82
+	INIT  reduce 82
+	LTL  reduce 82
+	')'  reduce 82
+	'}'  reduce 82
+
+
+state 76
+	ivar : vardcl .  (86)
+	ivar : vardcl . ASGN '{' c_list '}'  (87)
+	ivar : vardcl . ASGN expr  (88)
+	ivar : vardcl . ASGN ch_init  (89)
+
+	ASGN  shift 103
+	$end  reduce 86
+	error  reduce 86
+	C_CODE  reduce 86
+	C_DECL  reduce 86
+	C_STATE  reduce 86
+	C_TRACK  reduce 86
+	TYPEDEF  reduce 86
+	INLINE  reduce 86
+	SEMI  reduce 86
+	ARROW  reduce 86
+	FI  reduce 86
+	OD  reduce 86
+	SEP  reduce 86
+	ACTIVE  reduce 86
+	PROCTYPE  reduce 86
+	D_PROCTYPE  reduce 86
+	HIDDEN  reduce 86
+	SHOW  reduce 86
+	ISLOCAL  reduce 86
+	TYPE  reduce 86
+	UNAME  reduce 86
+	CLAIM  reduce 86
+	TRACE  reduce 86
+	INIT  reduce 86
+	LTL  reduce 86
+	')'  reduce 86
+	'}'  reduce 86
+	','  reduce 86
+
+
+state 77
+	one_decl : vis UNAME var_list .  (74)
+
+	.  reduce 74
+
+
+state 78
+	cstate : C_STATE STRING STRING STRING .  (50)
+
+	.  reduce 50
+
+
+state 79
+	cstate : C_TRACK STRING STRING STRING .  (51)
+
+	.  reduce 51
+
+
+state 80
+	utype : TYPEDEF NAME '{' $$7 . decl_lst '}'  (41)
+	vis : .  (67)
+
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	one_decl  goto 104
+	decl_lst  goto 105
+	vis  goto 34
+
+
+state 81
+	ns : INLINE nm l_par $$8 . args r_par  (45)
+	args : .  (253)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	')'  reduce 253
+
+	l_par  goto 123
+	args  goto 124
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 127
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	arg  goto 131
+
+
+state 82
+	inst : ACTIVE '[' NAME ']' .  (25)
+
+	.  reduce 25
+
+
+state 83
+	const_expr : '-' const_expr .  (170)
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+
+	.  reduce 170
+
+
+state 84
+	const_expr : l_par const_expr . r_par  (171)
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+
+	'+'  shift 85
+	'-'  shift 86
+	'*'  shift 87
+	'/'  shift 88
+	'%'  shift 89
+	')'  shift 132
+	.  error
+
+	r_par  goto 133
+
+
+state 85
+	const_expr : const_expr '+' . const_expr  (172)
+
+	CONST  shift 59
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 134
+
+
+state 86
+	const_expr : const_expr '-' . const_expr  (173)
+
+	CONST  shift 59
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 135
+
+
+state 87
+	const_expr : const_expr '*' . const_expr  (174)
+
+	CONST  shift 59
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 136
+
+
+state 88
+	const_expr : const_expr '/' . const_expr  (175)
+
+	CONST  shift 59
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 137
+
+
+state 89
+	const_expr : const_expr '%' . const_expr  (176)
+
+	CONST  shift 59
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 138
+
+
+state 90
+	inst : ACTIVE '[' const_expr ']' .  (24)
+
+	.  reduce 24
+
+
+state 91
+	claim : CLAIM optname $$5 body .  (33)
+
+	.  reduce 33
+
+
+state 92
+	body : '{' $$9 . sequence OS $$10 '}'  (57)
+	vis : .  (67)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	XU  shift 158
+	NAME  shift 159
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	one_decl  goto 162
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	sequence  goto 166
+	step  goto 167
+	stmnt  goto 168
+	vis  goto 34
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 93
+	Opt_priority : PRIORITY CONST .  (221)
+
+	.  reduce 221
+
+
+state 94
+	init : INIT $$3 Opt_priority body .  (27)
+
+	.  reduce 27
+
+
+state 95
+	ltl_body : error .  (31)
+
+	.  reduce 31
+
+
+state 96
+	ltl_body : '{' . full_expr OS '}'  (30)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	full_expr  goto 176
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 97
+	ltl : LTL optname2 $$4 ltl_body .  (29)
+
+	.  reduce 29
+
+
+state 98
+	proc : inst proctype NAME $$1 . l_par decl r_par $$2 Opt_priority Opt_enabler body  (19)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 177
+
+
+state 99
+	vardcl : NAME '[' . const_expr ']'  (93)
+
+	CONST  shift 59
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 178
+
+
+state 100
+	vardcl : NAME ':' . CONST  (92)
+
+	CONST  shift 179
+	.  error
+
+
+state 101
+	one_decl : vis TYPE asgn '{' . nlst '}'  (75)
+
+	NAME  shift 180
+	.  error
+
+	nlst  goto 181
+
+
+state 102
+	var_list : ivar ',' . var_list  (83)
+
+	NAME  shift 71
+	.  error
+
+	var_list  goto 182
+	ivar  goto 75
+	vardcl  goto 76
+
+
+state 103
+	ivar : vardcl ASGN . '{' c_list '}'  (87)
+	ivar : vardcl ASGN . expr  (88)
+	ivar : vardcl ASGN . ch_init  (89)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'['  shift 183
+	'{'  shift 184
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 185
+	ch_init  goto 186
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 104
+	decl_lst : one_decl .  (76)
+	decl_lst : one_decl . SEMI decl_lst  (77)
+
+	SEMI  shift 187
+	')'  reduce 76
+	'}'  reduce 76
+
+
+state 105
+	utype : TYPEDEF NAME '{' $$7 decl_lst . '}'  (41)
+
+	'}'  shift 188
+	.  error
+
+
+state 106
+	cexpr : C_EXPR .  (54)
+
+	.  reduce 54
+
+
+state 107
+	expr : RUN . aname $$33 l_par args r_par Opt_priority  (201)
+
+	NAME  shift 189
+	PNAME  shift 190
+	.  error
+
+	aname  goto 191
+
+
+state 108
+	expr : LEN . l_par varref r_par  (202)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 192
+
+
+state 109
+	expr : ENABLED . l_par expr r_par  (203)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 193
+
+
+state 110
+	expr : GET_P . l_par expr r_par  (204)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 194
+
+
+state 111
+	expr : PC_VAL . l_par expr r_par  (214)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 195
+
+
+state 112
+	expr : TIMEOUT .  (212)
+
+	.  reduce 212
+
+
+state 113
+	expr : NONPROGRESS .  (213)
+
+	.  reduce 213
+
+
+state 114
+	expr : CONST .  (211)
+
+	.  reduce 211
+
+
+state 115
+	pfld : NAME .  (95)
+	pfld : NAME . $$12 '[' expr ']'  (97)
+	$$12 : .  (96)
+
+	$end  reduce 95
+	error  reduce 95
+	C_CODE  reduce 95
+	C_DECL  reduce 95
+	C_STATE  reduce 95
+	C_TRACK  reduce 95
+	TYPEDEF  reduce 95
+	INLINE  reduce 95
+	SEMI  reduce 95
+	ARROW  reduce 95
+	FI  reduce 95
+	OD  reduce 95
+	IN  reduce 95
+	SEP  reduce 95
+	DOTDOT  reduce 95
+	UNLESS  reduce 95
+	ACTIVE  reduce 95
+	PROCTYPE  reduce 95
+	D_PROCTYPE  reduce 95
+	HIDDEN  reduce 95
+	SHOW  reduce 95
+	ISLOCAL  reduce 95
+	TYPE  reduce 95
+	UNAME  reduce 95
+	CLAIM  reduce 95
+	TRACE  reduce 95
+	INIT  reduce 95
+	LTL  reduce 95
+	ASGN  reduce 95
+	SND  reduce 95
+	O_SND  reduce 95
+	RCV  reduce 95
+	R_RCV  reduce 95
+	IMPLIES  reduce 95
+	EQUIV  reduce 95
+	OR  reduce 95
+	AND  reduce 95
+	UNTIL  reduce 95
+	WEAK_UNTIL  reduce 95
+	RELEASE  reduce 95
+	'|'  reduce 95
+	'^'  reduce 95
+	'&'  reduce 95
+	EQ  reduce 95
+	NE  reduce 95
+	GT  reduce 95
+	LT  reduce 95
+	GE  reduce 95
+	LE  reduce 95
+	LSHIFT  reduce 95
+	RSHIFT  reduce 95
+	'+'  reduce 95
+	'-'  reduce 95
+	'*'  reduce 95
+	'/'  reduce 95
+	'%'  reduce 95
+	INCR  reduce 95
+	DECR  reduce 95
+	'('  reduce 95
+	')'  reduce 95
+	'['  reduce 96
+	']'  reduce 95
+	'}'  reduce 95
+	':'  reduce 95
+	','  reduce 95
+	'.'  reduce 95
+
+	$$12  goto 196
+
+
+state 116
+	expr : PNAME . '[' expr ']' '@' NAME  (215)
+	expr : PNAME . '[' expr ']' ':' pfld  (216)
+	expr : PNAME . '@' NAME  (217)
+	expr : PNAME . ':' pfld  (218)
+
+	'['  shift 197
+	':'  shift 198
+	'@'  shift 199
+	.  error
+
+
+state 117
+	expr : SND . expr  (198)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 200
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 118
+	ltl_expr : ALWAYS . expr  (230)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 201
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 119
+	ltl_expr : EVENTUALLY . expr  (231)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 202
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 120
+	ltl_expr : NEXT . expr  (229)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 203
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 121
+	expr : '-' . expr  (197)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 204
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 122
+	expr : '~' . expr  (196)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 205
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 123
+	expr : l_par . expr r_par  (177)
+	expr : l_par . expr ARROW expr ':' expr r_par  (199)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 206
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 124
+	ns : INLINE nm l_par $$8 args . r_par  (45)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 207
+
+
+state 125
+	expr : cexpr .  (210)
+
+	.  reduce 210
+
+
+state 126
+	expr : varref . RCV $$34 '[' rargs ']'  (206)
+	expr : varref . R_RCV $$35 '[' rargs ']'  (208)
+	expr : varref .  (209)
+
+	RCV  shift 208
+	R_RCV  shift 209
+	$end  reduce 209
+	error  reduce 209
+	C_CODE  reduce 209
+	C_DECL  reduce 209
+	C_STATE  reduce 209
+	C_TRACK  reduce 209
+	TYPEDEF  reduce 209
+	INLINE  reduce 209
+	SEMI  reduce 209
+	ARROW  reduce 209
+	FI  reduce 209
+	OD  reduce 209
+	SEP  reduce 209
+	DOTDOT  reduce 209
+	UNLESS  reduce 209
+	ACTIVE  reduce 209
+	PROCTYPE  reduce 209
+	D_PROCTYPE  reduce 209
+	HIDDEN  reduce 209
+	SHOW  reduce 209
+	ISLOCAL  reduce 209
+	TYPE  reduce 209
+	UNAME  reduce 209
+	CLAIM  reduce 209
+	TRACE  reduce 209
+	INIT  reduce 209
+	LTL  reduce 209
+	IMPLIES  reduce 209
+	EQUIV  reduce 209
+	OR  reduce 209
+	AND  reduce 209
+	UNTIL  reduce 209
+	WEAK_UNTIL  reduce 209
+	RELEASE  reduce 209
+	'|'  reduce 209
+	'^'  reduce 209
+	'&'  reduce 209
+	EQ  reduce 209
+	NE  reduce 209
+	GT  reduce 209
+	LT  reduce 209
+	GE  reduce 209
+	LE  reduce 209
+	LSHIFT  reduce 209
+	RSHIFT  reduce 209
+	'+'  reduce 209
+	'-'  reduce 209
+	'*'  reduce 209
+	'/'  reduce 209
+	'%'  reduce 209
+	'('  reduce 209
+	')'  reduce 209
+	']'  reduce 209
+	'}'  reduce 209
+	':'  reduce 209
+	','  reduce 209
+
+
+state 127
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	arg : expr .  (259)
+	arg : expr . ',' arg  (260)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	','  shift 233
+	SEMI  reduce 259
+	ARROW  reduce 259
+	FI  reduce 259
+	OD  reduce 259
+	SEP  reduce 259
+	UNLESS  reduce 259
+	')'  reduce 259
+	'}'  reduce 259
+
+
+state 128
+	varref : cmpnd .  (94)
+
+	.  reduce 94
+
+
+state 129
+	cmpnd : pfld . $$13 sfld  (99)
+	$$13 : .  (98)
+
+	.  reduce 98
+
+	$$13  goto 234
+
+
+state 130
+	expr : ltl_expr .  (219)
+
+	.  reduce 219
+
+
+state 131
+	args : arg .  (254)
+
+	.  reduce 254
+
+
+state 132
+	r_par : ')' .  (16)
+
+	.  reduce 16
+
+
+state 133
+	const_expr : l_par const_expr r_par .  (171)
+
+	.  reduce 171
+
+
+state 134
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr '+' const_expr .  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+
+	'*'  shift 87
+	'/'  shift 88
+	'%'  shift 89
+	'+'  reduce 172
+	'-'  reduce 172
+	')'  reduce 172
+	']'  reduce 172
+
+
+state 135
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr '-' const_expr .  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+
+	'*'  shift 87
+	'/'  shift 88
+	'%'  shift 89
+	'+'  reduce 173
+	'-'  reduce 173
+	')'  reduce 173
+	']'  reduce 173
+
+
+state 136
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr '*' const_expr .  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+
+	.  reduce 174
+
+
+state 137
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr '/' const_expr .  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+
+	.  reduce 175
+
+
+state 138
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+	const_expr : const_expr '%' const_expr .  (176)
+
+	.  reduce 176
+
+
+state 139
+	Special : error .  (123)
+
+	.  reduce 123
+
+
+state 140
+	Stmnt : ASSERT . full_expr  (132)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	full_expr  goto 235
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 141
+	Stmnt : PRINT . l_par STRING $$20 prargs r_par  (129)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 236
+
+
+state 142
+	Stmnt : PRINTM . l_par varref r_par  (130)
+	Stmnt : PRINTM . l_par CONST r_par  (131)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 237
+
+
+state 143
+	Stmnt : SET_P . l_par two_args r_par  (127)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 238
+
+
+state 144
+	Stmnt : RETURN . full_expr  (156)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	full_expr  goto 239
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 145
+	Special : GOTO . NAME  (120)
+
+	NAME  shift 240
+	.  error
+
+
+state 146
+	Special : BREAK .  (119)
+
+	.  reduce 119
+
+
+state 147
+	Stmnt : ELSE .  (143)
+
+	.  reduce 143
+
+
+state 148
+	Special : IF . options FI  (116)
+
+	SEP  shift 241
+	.  error
+
+	options  goto 242
+	option  goto 243
+
+
+state 149
+	Special : DO . $$19 options OD  (118)
+	$$19 : .  (117)
+
+	.  reduce 117
+
+	$$19  goto 244
+
+
+state 150
+	for_pre : FOR . l_par $$14 varref  (105)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 245
+
+
+state 151
+	Special : SELECT . l_par varref ':' expr DOTDOT expr r_par  (115)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 246
+
+
+state 152
+	Stmnt : ATOMIC . '{' $$25 sequence OS '}'  (145)
+
+	'{'  shift 247
+	.  error
+
+
+state 153
+	Stmnt : D_STEP . '{' $$26 sequence OS '}'  (147)
+
+	'{'  shift 248
+	.  error
+
+
+state 154
+	Probe : FULL . l_par varref r_par  (240)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 249
+
+
+state 155
+	Probe : EMPTY . l_par varref r_par  (242)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 250
+
+
+state 156
+	Probe : NFULL . l_par varref r_par  (241)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 251
+
+
+state 157
+	Probe : NEMPTY . l_par varref r_par  (243)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 252
+
+
+state 158
+	step : XU . vref_lst  (61)
+
+	NAME  shift 115
+	.  error
+
+	vref_lst  goto 253
+	varref  goto 254
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 159
+	step : NAME . ':' one_decl  (62)
+	step : NAME . ':' XU  (63)
+	pfld : NAME .  (95)
+	pfld : NAME . $$12 '[' expr ']'  (97)
+	Special : NAME . ':' stmnt  (121)
+	Special : NAME . ':'  (122)
+	$$12 : .  (96)
+
+	':'  shift 255
+	SEMI  reduce 95
+	ARROW  reduce 95
+	FI  reduce 95
+	OD  reduce 95
+	SEP  reduce 95
+	UNLESS  reduce 95
+	ASGN  reduce 95
+	SND  reduce 95
+	O_SND  reduce 95
+	RCV  reduce 95
+	R_RCV  reduce 95
+	IMPLIES  reduce 95
+	EQUIV  reduce 95
+	OR  reduce 95
+	AND  reduce 95
+	UNTIL  reduce 95
+	WEAK_UNTIL  reduce 95
+	RELEASE  reduce 95
+	'|'  reduce 95
+	'^'  reduce 95
+	'&'  reduce 95
+	EQ  reduce 95
+	NE  reduce 95
+	GT  reduce 95
+	LT  reduce 95
+	GE  reduce 95
+	LE  reduce 95
+	LSHIFT  reduce 95
+	RSHIFT  reduce 95
+	'+'  reduce 95
+	'-'  reduce 95
+	'*'  reduce 95
+	'/'  reduce 95
+	'%'  reduce 95
+	INCR  reduce 95
+	DECR  reduce 95
+	'['  reduce 96
+	'}'  reduce 95
+	'.'  reduce 95
+
+	$$12  goto 196
+
+
+state 160
+	Stmnt : INAME . $$28 l_par args r_par $$29 Stmnt  (152)
+	$$28 : .  (150)
+
+	.  reduce 150
+
+	$$28  goto 256
+
+
+state 161
+	Stmnt : '{' . $$27 sequence OS '}'  (149)
+	$$27 : .  (148)
+
+	.  reduce 148
+
+	$$27  goto 257
+
+
+state 162
+	step : one_decl .  (60)
+
+	.  reduce 60
+
+
+state 163
+	expr : l_par . expr r_par  (177)
+	expr : l_par . expr ARROW expr ':' expr r_par  (199)
+	Expr : l_par . Expr r_par  (233)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 258
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 259
+	Probe  goto 175
+
+
+state 164
+	Stmnt : full_expr .  (142)
+
+	.  reduce 142
+
+
+state 165
+	Stmnt : ccode .  (133)
+
+	.  reduce 133
+
+
+state 166
+	body : '{' $$9 sequence . OS $$10 '}'  (57)
+	sequence : sequence . MS step  (59)
+	OS : .  (161)
+
+	SEMI  shift 8
+	ARROW  shift 9
+	'}'  reduce 161
+
+	semi  goto 260
+	OS  goto 261
+	MS  goto 262
+
+
+state 167
+	sequence : step .  (58)
+
+	.  reduce 58
+
+
+state 168
+	step : stmnt .  (64)
+	step : stmnt . UNLESS $$11 stmnt  (66)
+
+	UNLESS  shift 263
+	SEMI  reduce 64
+	ARROW  reduce 64
+	FI  reduce 64
+	OD  reduce 64
+	SEP  reduce 64
+	'}'  reduce 64
+
+
+state 169
+	Special : varref . RCV $$15 rargs  (108)
+	Special : varref . SND $$16 margs  (110)
+	Stmnt : varref . ASGN full_expr  (124)
+	Stmnt : varref . INCR  (125)
+	Stmnt : varref . DECR  (126)
+	Stmnt : varref . R_RCV $$21 rargs  (135)
+	Stmnt : varref . RCV $$22 LT rargs GT  (137)
+	Stmnt : varref . R_RCV $$23 LT rargs GT  (139)
+	Stmnt : varref . O_SND $$24 margs  (141)
+	Stmnt : varref . ASGN INAME $$30 l_par args r_par $$31 Stmnt  (155)
+	expr : varref . RCV $$34 '[' rargs ']'  (206)
+	expr : varref . R_RCV $$35 '[' rargs ']'  (208)
+	expr : varref .  (209)
+
+	ASGN  shift 264
+	SND  shift 265
+	O_SND  shift 266
+	RCV  shift 267
+	R_RCV  shift 268
+	INCR  shift 269
+	DECR  shift 270
+	SEMI  reduce 209
+	ARROW  reduce 209
+	FI  reduce 209
+	OD  reduce 209
+	SEP  reduce 209
+	UNLESS  reduce 209
+	IMPLIES  reduce 209
+	EQUIV  reduce 209
+	OR  reduce 209
+	AND  reduce 209
+	UNTIL  reduce 209
+	WEAK_UNTIL  reduce 209
+	RELEASE  reduce 209
+	'|'  reduce 209
+	'^'  reduce 209
+	'&'  reduce 209
+	EQ  reduce 209
+	NE  reduce 209
+	GT  reduce 209
+	LT  reduce 209
+	GE  reduce 209
+	LE  reduce 209
+	LSHIFT  reduce 209
+	RSHIFT  reduce 209
+	'+'  reduce 209
+	'-'  reduce 209
+	'*'  reduce 209
+	'/'  reduce 209
+	'%'  reduce 209
+	'}'  reduce 209
+
+
+state 170
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	full_expr : expr .  (222)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	Expr : expr . AND Expr  (236)
+	Expr : expr . OR Expr  (239)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 271
+	AND  shift 272
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	SEMI  reduce 222
+	ARROW  reduce 222
+	FI  reduce 222
+	OD  reduce 222
+	SEP  reduce 222
+	UNLESS  reduce 222
+	')'  reduce 222
+	'}'  reduce 222
+
+
+state 171
+	stmnt : Special .  (102)
+
+	.  reduce 102
+
+
+state 172
+	stmnt : Stmnt .  (103)
+
+	.  reduce 103
+
+
+state 173
+	Special : for_pre . ':' expr DOTDOT expr r_par $$17 for_post  (112)
+	Special : for_pre . IN varref r_par $$18 for_post  (114)
+
+	IN  shift 273
+	':'  shift 274
+	.  error
+
+
+state 174
+	full_expr : Expr .  (223)
+	Expr : Expr . AND Expr  (234)
+	Expr : Expr . AND expr  (235)
+	Expr : Expr . OR Expr  (237)
+	Expr : Expr . OR expr  (238)
+
+	OR  shift 275
+	AND  shift 276
+	SEMI  reduce 223
+	ARROW  reduce 223
+	FI  reduce 223
+	OD  reduce 223
+	SEP  reduce 223
+	UNLESS  reduce 223
+	')'  reduce 223
+	'}'  reduce 223
+
+
+state 175
+	Expr : Probe .  (232)
+
+	.  reduce 232
+
+
+state 176
+	ltl_body : '{' full_expr . OS '}'  (30)
+	OS : .  (161)
+
+	SEMI  shift 8
+	ARROW  shift 9
+	'}'  reduce 161
+
+	semi  goto 277
+	OS  goto 278
+
+
+state 177
+	proc : inst proctype NAME $$1 l_par . decl r_par $$2 Opt_priority Opt_enabler body  (19)
+	vis : .  (67)
+	decl : .  (78)
+
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	TYPE  reduce 67
+	UNAME  reduce 67
+	')'  reduce 78
+
+	one_decl  goto 104
+	decl  goto 279
+	decl_lst  goto 280
+	vis  goto 34
+
+
+state 178
+	vardcl : NAME '[' const_expr . ']'  (93)
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+
+	'+'  shift 85
+	'-'  shift 86
+	'*'  shift 87
+	'/'  shift 88
+	'%'  shift 89
+	']'  shift 281
+	.  error
+
+
+state 179
+	vardcl : NAME ':' CONST .  (92)
+
+	.  reduce 92
+
+
+state 180
+	nlst : NAME .  (269)
+
+	.  reduce 269
+
+
+state 181
+	one_decl : vis TYPE asgn '{' nlst . '}'  (75)
+	nlst : nlst . NAME  (270)
+	nlst : nlst . ','  (271)
+
+	NAME  shift 282
+	'}'  shift 283
+	','  shift 284
+	.  error
+
+
+state 182
+	var_list : ivar ',' var_list .  (83)
+
+	.  reduce 83
+
+
+state 183
+	ch_init : '[' . const_expr ']' OF '{' typ_list '}'  (90)
+
+	CONST  shift 59
+	'-'  shift 61
+	'('  shift 57
+	.  error
+
+	l_par  goto 62
+	const_expr  goto 285
+
+
+state 184
+	ivar : vardcl ASGN '{' . c_list '}'  (87)
+
+	CONST  shift 286
+	.  error
+
+	c_list  goto 287
+
+
+state 185
+	ivar : vardcl ASGN expr .  (88)
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 88
+	error  reduce 88
+	C_CODE  reduce 88
+	C_DECL  reduce 88
+	C_STATE  reduce 88
+	C_TRACK  reduce 88
+	TYPEDEF  reduce 88
+	INLINE  reduce 88
+	SEMI  reduce 88
+	ARROW  reduce 88
+	FI  reduce 88
+	OD  reduce 88
+	SEP  reduce 88
+	ACTIVE  reduce 88
+	PROCTYPE  reduce 88
+	D_PROCTYPE  reduce 88
+	HIDDEN  reduce 88
+	SHOW  reduce 88
+	ISLOCAL  reduce 88
+	TYPE  reduce 88
+	UNAME  reduce 88
+	CLAIM  reduce 88
+	TRACE  reduce 88
+	INIT  reduce 88
+	LTL  reduce 88
+	')'  reduce 88
+	'}'  reduce 88
+	','  reduce 88
+
+
+state 186
+	ivar : vardcl ASGN ch_init .  (89)
+
+	.  reduce 89
+
+
+state 187
+	decl_lst : one_decl SEMI . decl_lst  (77)
+	vis : .  (67)
+
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	one_decl  goto 104
+	decl_lst  goto 288
+	vis  goto 34
+
+
+state 188
+	utype : TYPEDEF NAME '{' $$7 decl_lst '}' .  (41)
+
+	.  reduce 41
+
+
+state 189
+	aname : NAME .  (167)
+
+	.  reduce 167
+
+
+state 190
+	aname : PNAME .  (168)
+
+	.  reduce 168
+
+
+state 191
+	expr : RUN aname . $$33 l_par args r_par Opt_priority  (201)
+	$$33 : .  (200)
+
+	.  reduce 200
+
+	$$33  goto 289
+
+
+state 192
+	expr : LEN l_par . varref r_par  (202)
+
+	NAME  shift 115
+	.  error
+
+	varref  goto 290
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 193
+	expr : ENABLED l_par . expr r_par  (203)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 291
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 194
+	expr : GET_P l_par . expr r_par  (204)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 292
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 195
+	expr : PC_VAL l_par . expr r_par  (214)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 293
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 196
+	pfld : NAME $$12 . '[' expr ']'  (97)
+
+	'['  shift 294
+	.  error
+
+
+state 197
+	expr : PNAME '[' . expr ']' '@' NAME  (215)
+	expr : PNAME '[' . expr ']' ':' pfld  (216)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 295
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 198
+	expr : PNAME ':' . pfld  (218)
+
+	NAME  shift 115
+	.  error
+
+	pfld  goto 296
+
+
+state 199
+	expr : PNAME '@' . NAME  (217)
+
+	NAME  shift 297
+	.  error
+
+
+state 200
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : SND expr .  (198)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	.  reduce 198
+
+
+state 201
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	ltl_expr : ALWAYS expr .  (230)
+
+	.  reduce 230
+
+
+state 202
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	ltl_expr : EVENTUALLY expr .  (231)
+
+	.  reduce 231
+
+
+state 203
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	ltl_expr : NEXT expr .  (229)
+
+	.  reduce 229
+
+
+state 204
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : '-' expr .  (197)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	.  reduce 197
+
+
+state 205
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : '~' expr .  (196)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	.  reduce 196
+
+
+state 206
+	expr : l_par expr . r_par  (177)
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : l_par expr . ARROW expr ':' expr r_par  (199)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	ARROW  shift 298
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  shift 132
+	.  error
+
+	r_par  goto 299
+
+
+state 207
+	ns : INLINE nm l_par $$8 args r_par .  (45)
+
+	.  reduce 45
+
+
+state 208
+	expr : varref RCV . $$34 '[' rargs ']'  (206)
+	$$34 : .  (205)
+
+	.  reduce 205
+
+	$$34  goto 300
+
+
+state 209
+	expr : varref R_RCV . $$35 '[' rargs ']'  (208)
+	$$35 : .  (207)
+
+	.  reduce 207
+
+	$$35  goto 301
+
+
+state 210
+	ltl_expr : expr IMPLIES . expr  (227)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 302
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 211
+	ltl_expr : expr EQUIV . expr  (228)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 303
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 212
+	expr : expr OR . expr  (193)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 304
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 213
+	expr : expr AND . expr  (192)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 305
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 214
+	ltl_expr : expr UNTIL . expr  (224)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 306
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 215
+	ltl_expr : expr WEAK_UNTIL . expr  (226)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 307
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 216
+	ltl_expr : expr RELEASE . expr  (225)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 308
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 217
+	expr : expr '|' . expr  (185)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 309
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 218
+	expr : expr '^' . expr  (184)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 310
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 219
+	expr : expr '&' . expr  (183)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 311
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 220
+	expr : expr EQ . expr  (190)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 312
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 221
+	expr : expr NE . expr  (191)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 313
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 222
+	expr : expr GT . expr  (186)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 314
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 223
+	expr : expr LT . expr  (187)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 315
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 224
+	expr : expr GE . expr  (188)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 316
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 225
+	expr : expr LE . expr  (189)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 317
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 226
+	expr : expr LSHIFT . expr  (194)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 318
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 227
+	expr : expr RSHIFT . expr  (195)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 319
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 228
+	expr : expr '+' . expr  (178)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 320
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 229
+	expr : expr '-' . expr  (179)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 321
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 230
+	expr : expr '*' . expr  (180)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 322
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 231
+	expr : expr '/' . expr  (181)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 323
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 232
+	expr : expr '%' . expr  (182)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 324
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 233
+	arg : expr ',' . arg  (260)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 127
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	arg  goto 325
+
+
+state 234
+	cmpnd : pfld $$13 . sfld  (99)
+	sfld : .  (100)
+
+	'.'  shift 326
+	$end  reduce 100
+	error  reduce 100
+	C_CODE  reduce 100
+	C_DECL  reduce 100
+	C_STATE  reduce 100
+	C_TRACK  reduce 100
+	TYPEDEF  reduce 100
+	INLINE  reduce 100
+	SEMI  reduce 100
+	ARROW  reduce 100
+	FI  reduce 100
+	OD  reduce 100
+	IN  reduce 100
+	SEP  reduce 100
+	DOTDOT  reduce 100
+	UNLESS  reduce 100
+	ACTIVE  reduce 100
+	PROCTYPE  reduce 100
+	D_PROCTYPE  reduce 100
+	HIDDEN  reduce 100
+	SHOW  reduce 100
+	ISLOCAL  reduce 100
+	TYPE  reduce 100
+	UNAME  reduce 100
+	CLAIM  reduce 100
+	TRACE  reduce 100
+	INIT  reduce 100
+	LTL  reduce 100
+	ASGN  reduce 100
+	SND  reduce 100
+	O_SND  reduce 100
+	RCV  reduce 100
+	R_RCV  reduce 100
+	IMPLIES  reduce 100
+	EQUIV  reduce 100
+	OR  reduce 100
+	AND  reduce 100
+	UNTIL  reduce 100
+	WEAK_UNTIL  reduce 100
+	RELEASE  reduce 100
+	'|'  reduce 100
+	'^'  reduce 100
+	'&'  reduce 100
+	EQ  reduce 100
+	NE  reduce 100
+	GT  reduce 100
+	LT  reduce 100
+	GE  reduce 100
+	LE  reduce 100
+	LSHIFT  reduce 100
+	RSHIFT  reduce 100
+	'+'  reduce 100
+	'-'  reduce 100
+	'*'  reduce 100
+	'/'  reduce 100
+	'%'  reduce 100
+	INCR  reduce 100
+	DECR  reduce 100
+	'('  reduce 100
+	')'  reduce 100
+	']'  reduce 100
+	'}'  reduce 100
+	':'  reduce 100
+	','  reduce 100
+
+	sfld  goto 327
+
+
+state 235
+	Stmnt : ASSERT full_expr .  (132)
+
+	.  reduce 132
+
+
+state 236
+	Stmnt : PRINT l_par . STRING $$20 prargs r_par  (129)
+
+	STRING  shift 328
+	.  error
+
+
+state 237
+	Stmnt : PRINTM l_par . varref r_par  (130)
+	Stmnt : PRINTM l_par . CONST r_par  (131)
+
+	CONST  shift 329
+	NAME  shift 115
+	.  error
+
+	varref  goto 330
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 238
+	Stmnt : SET_P l_par . two_args r_par  (127)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 331
+	cmpnd  goto 128
+	pfld  goto 129
+	two_args  goto 332
+	ltl_expr  goto 130
+
+
+state 239
+	Stmnt : RETURN full_expr .  (156)
+
+	.  reduce 156
+
+
+state 240
+	Special : GOTO NAME .  (120)
+
+	.  reduce 120
+
+
+state 241
+	option : SEP . $$32 sequence OS  (160)
+	$$32 : .  (159)
+
+	.  reduce 159
+
+	$$32  goto 333
+
+
+state 242
+	Special : IF options . FI  (116)
+
+	FI  shift 334
+	.  error
+
+
+state 243
+	options : option .  (157)
+	options : option . options  (158)
+
+	SEP  shift 241
+	FI  reduce 157
+	OD  reduce 157
+
+	options  goto 335
+	option  goto 243
+
+
+state 244
+	Special : DO $$19 . options OD  (118)
+
+	SEP  shift 241
+	.  error
+
+	options  goto 336
+	option  goto 243
+
+
+state 245
+	for_pre : FOR l_par . $$14 varref  (105)
+	$$14 : .  (104)
+
+	.  reduce 104
+
+	$$14  goto 337
+
+
+state 246
+	Special : SELECT l_par . varref ':' expr DOTDOT expr r_par  (115)
+
+	NAME  shift 115
+	.  error
+
+	varref  goto 338
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 247
+	Stmnt : ATOMIC '{' . $$25 sequence OS '}'  (145)
+	$$25 : .  (144)
+
+	.  reduce 144
+
+	$$25  goto 339
+
+
+state 248
+	Stmnt : D_STEP '{' . $$26 sequence OS '}'  (147)
+	$$26 : .  (146)
+
+	.  reduce 146
+
+	$$26  goto 340
+
+
+state 249
+	Probe : FULL l_par . varref r_par  (240)
+
+	NAME  shift 115
+	.  error
+
+	varref  goto 341
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 250
+	Probe : EMPTY l_par . varref r_par  (242)
+
+	NAME  shift 115
+	.  error
+
+	varref  goto 342
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 251
+	Probe : NFULL l_par . varref r_par  (241)
+
+	NAME  shift 115
+	.  error
+
+	varref  goto 343
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 252
+	Probe : NEMPTY l_par . varref r_par  (243)
+
+	NAME  shift 115
+	.  error
+
+	varref  goto 344
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 253
+	step : XU vref_lst .  (61)
+
+	.  reduce 61
+
+
+state 254
+	vref_lst : varref .  (80)
+	vref_lst : varref . ',' vref_lst  (81)
+
+	','  shift 345
+	SEMI  reduce 80
+	ARROW  reduce 80
+	FI  reduce 80
+	OD  reduce 80
+	SEP  reduce 80
+	'}'  reduce 80
+
+
+state 255
+	step : NAME ':' . one_decl  (62)
+	step : NAME ':' . XU  (63)
+	Special : NAME ':' . stmnt  (121)
+	Special : NAME ':' .  (122)
+	vis : .  (67)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	XU  shift 346
+	NAME  shift 347
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	SEMI  reduce 122
+	ARROW  reduce 122
+	FI  reduce 122
+	OD  reduce 122
+	SEP  reduce 122
+	UNLESS  reduce 122
+	TYPE  reduce 67
+	UNAME  reduce 67
+	'}'  reduce 122
+
+	one_decl  goto 348
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	stmnt  goto 349
+	vis  goto 34
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 256
+	Stmnt : INAME $$28 . l_par args r_par $$29 Stmnt  (152)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 350
+
+
+state 257
+	Stmnt : '{' $$27 . sequence OS '}'  (149)
+	vis : .  (67)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	XU  shift 158
+	NAME  shift 159
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	one_decl  goto 162
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	sequence  goto 351
+	step  goto 167
+	stmnt  goto 168
+	vis  goto 34
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 258
+	expr : l_par expr . r_par  (177)
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : l_par expr . ARROW expr ':' expr r_par  (199)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	Expr : expr . AND Expr  (236)
+	Expr : expr . OR Expr  (239)
+
+	ARROW  shift 298
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 271
+	AND  shift 272
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  shift 132
+	.  error
+
+	r_par  goto 299
+
+
+state 259
+	Expr : l_par Expr . r_par  (233)
+	Expr : Expr . AND Expr  (234)
+	Expr : Expr . AND expr  (235)
+	Expr : Expr . OR Expr  (237)
+	Expr : Expr . OR expr  (238)
+
+	OR  shift 275
+	AND  shift 276
+	')'  shift 132
+	.  error
+
+	r_par  goto 352
+
+
+state 260
+	OS : semi .  (162)
+	MS : semi .  (165)
+
+	error  reduce 165
+	ASSERT  reduce 165
+	PRINT  reduce 165
+	PRINTM  reduce 165
+	C_CODE  reduce 165
+	C_DECL  reduce 165
+	C_EXPR  reduce 165
+	RUN  reduce 165
+	LEN  reduce 165
+	ENABLED  reduce 165
+	SET_P  reduce 165
+	GET_P  reduce 165
+	PC_VAL  reduce 165
+	RETURN  reduce 165
+	GOTO  reduce 165
+	BREAK  reduce 165
+	ELSE  reduce 165
+	SEMI  reduce 165
+	ARROW  reduce 165
+	IF  reduce 165
+	FI  reduce 162
+	DO  reduce 165
+	OD  reduce 162
+	FOR  reduce 165
+	SELECT  reduce 165
+	SEP  reduce 162
+	ATOMIC  reduce 165
+	D_STEP  reduce 165
+	TIMEOUT  reduce 165
+	NONPROGRESS  reduce 165
+	HIDDEN  reduce 165
+	SHOW  reduce 165
+	ISLOCAL  reduce 165
+	FULL  reduce 165
+	EMPTY  reduce 165
+	NFULL  reduce 165
+	NEMPTY  reduce 165
+	CONST  reduce 165
+	TYPE  reduce 165
+	XU  reduce 165
+	NAME  reduce 165
+	UNAME  reduce 165
+	PNAME  reduce 165
+	INAME  reduce 165
+	SND  reduce 165
+	ALWAYS  reduce 165
+	EVENTUALLY  reduce 165
+	NEXT  reduce 165
+	'-'  reduce 165
+	'~'  reduce 165
+	'('  reduce 165
+	'{'  reduce 165
+	'}'  reduce 162
+
+
+state 261
+	body : '{' $$9 sequence OS . $$10 '}'  (57)
+	$$10 : .  (56)
+
+	.  reduce 56
+
+	$$10  goto 353
+
+
+state 262
+	sequence : sequence MS . step  (59)
+	MS : MS . semi  (166)
+	vis : .  (67)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	SEMI  shift 8
+	ARROW  shift 9
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	XU  shift 158
+	NAME  shift 159
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	one_decl  goto 162
+	semi  goto 354
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	step  goto 355
+	stmnt  goto 168
+	vis  goto 34
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 263
+	step : stmnt UNLESS . $$11 stmnt  (66)
+	$$11 : .  (65)
+
+	.  reduce 65
+
+	$$11  goto 356
+
+
+state 264
+	Stmnt : varref ASGN . full_expr  (124)
+	Stmnt : varref ASGN . INAME $$30 l_par args r_par $$31 Stmnt  (155)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	INAME  shift 357
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	full_expr  goto 358
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 265
+	Special : varref SND . $$16 margs  (110)
+	$$16 : .  (109)
+
+	.  reduce 109
+
+	$$16  goto 359
+
+
+state 266
+	Stmnt : varref O_SND . $$24 margs  (141)
+	$$24 : .  (140)
+
+	.  reduce 140
+
+	$$24  goto 360
+
+
+state 267
+	Special : varref RCV . $$15 rargs  (108)
+	Stmnt : varref RCV . $$22 LT rargs GT  (137)
+	expr : varref RCV . $$34 '[' rargs ']'  (206)
+	$$15 : .  (107)
+	$$22 : .  (136)
+	$$34 : .  (205)
+
+	EVAL  reduce 107
+	CONST  reduce 107
+	NAME  reduce 107
+	LT  reduce 136
+	'-'  reduce 107
+	'('  reduce 107
+	'['  reduce 205
+
+	$$15  goto 361
+	$$22  goto 362
+	$$34  goto 300
+
+
+state 268
+	Stmnt : varref R_RCV . $$21 rargs  (135)
+	Stmnt : varref R_RCV . $$23 LT rargs GT  (139)
+	expr : varref R_RCV . $$35 '[' rargs ']'  (208)
+	$$21 : .  (134)
+	$$23 : .  (138)
+	$$35 : .  (207)
+
+	EVAL  reduce 134
+	CONST  reduce 134
+	NAME  reduce 134
+	LT  reduce 138
+	'-'  reduce 134
+	'('  reduce 134
+	'['  reduce 207
+
+	$$21  goto 363
+	$$23  goto 364
+	$$35  goto 301
+
+
+state 269
+	Stmnt : varref INCR .  (125)
+
+	.  reduce 125
+
+
+state 270
+	Stmnt : varref DECR .  (126)
+
+	.  reduce 126
+
+
+state 271
+	expr : expr OR . expr  (193)
+	Expr : expr OR . Expr  (239)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 365
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 366
+	Probe  goto 175
+
+
+state 272
+	expr : expr AND . expr  (192)
+	Expr : expr AND . Expr  (236)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 367
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 368
+	Probe  goto 175
+
+
+state 273
+	Special : for_pre IN . varref r_par $$18 for_post  (114)
+
+	NAME  shift 115
+	.  error
+
+	varref  goto 369
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 274
+	Special : for_pre ':' . expr DOTDOT expr r_par $$17 for_post  (112)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 370
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 275
+	Expr : Expr OR . Expr  (237)
+	Expr : Expr OR . expr  (238)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 371
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 372
+	Probe  goto 175
+
+
+state 276
+	Expr : Expr AND . Expr  (234)
+	Expr : Expr AND . expr  (235)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 373
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 374
+	Probe  goto 175
+
+
+state 277
+	OS : semi .  (162)
+
+	.  reduce 162
+
+
+state 278
+	ltl_body : '{' full_expr OS . '}'  (30)
+
+	'}'  shift 375
+	.  error
+
+
+state 279
+	proc : inst proctype NAME $$1 l_par decl . r_par $$2 Opt_priority Opt_enabler body  (19)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 376
+
+
+state 280
+	decl : decl_lst .  (79)
+
+	.  reduce 79
+
+
+state 281
+	vardcl : NAME '[' const_expr ']' .  (93)
+
+	.  reduce 93
+
+
+state 282
+	nlst : nlst NAME .  (270)
+
+	.  reduce 270
+
+
+state 283
+	one_decl : vis TYPE asgn '{' nlst '}' .  (75)
+
+	.  reduce 75
+
+
+state 284
+	nlst : nlst ',' .  (271)
+
+	.  reduce 271
+
+
+state 285
+	ch_init : '[' const_expr . ']' OF '{' typ_list '}'  (90)
+	const_expr : const_expr . '+' const_expr  (172)
+	const_expr : const_expr . '-' const_expr  (173)
+	const_expr : const_expr . '*' const_expr  (174)
+	const_expr : const_expr . '/' const_expr  (175)
+	const_expr : const_expr . '%' const_expr  (176)
+
+	'+'  shift 85
+	'-'  shift 86
+	'*'  shift 87
+	'/'  shift 88
+	'%'  shift 89
+	']'  shift 377
+	.  error
+
+
+state 286
+	c_list : CONST .  (84)
+	c_list : CONST . ',' c_list  (85)
+
+	','  shift 378
+	'}'  reduce 84
+
+
+state 287
+	ivar : vardcl ASGN '{' c_list . '}'  (87)
+
+	'}'  shift 379
+	.  error
+
+
+state 288
+	decl_lst : one_decl SEMI decl_lst .  (77)
+
+	.  reduce 77
+
+
+state 289
+	expr : RUN aname $$33 . l_par args r_par Opt_priority  (201)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 380
+
+
+state 290
+	expr : LEN l_par varref . r_par  (202)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 381
+
+
+state 291
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : ENABLED l_par expr . r_par  (203)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  shift 132
+	.  error
+
+	r_par  goto 382
+
+
+state 292
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : GET_P l_par expr . r_par  (204)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  shift 132
+	.  error
+
+	r_par  goto 383
+
+
+state 293
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : PC_VAL l_par expr . r_par  (214)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  shift 132
+	.  error
+
+	r_par  goto 384
+
+
+state 294
+	pfld : NAME $$12 '[' . expr ']'  (97)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 385
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 295
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : PNAME '[' expr . ']' '@' NAME  (215)
+	expr : PNAME '[' expr . ']' ':' pfld  (216)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	']'  shift 386
+	.  error
+
+
+state 296
+	expr : PNAME ':' pfld .  (218)
+
+	.  reduce 218
+
+
+state 297
+	expr : PNAME '@' NAME .  (217)
+
+	.  reduce 217
+
+
+state 298
+	expr : l_par expr ARROW . expr ':' expr r_par  (199)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 387
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 299
+	expr : l_par expr r_par .  (177)
+
+	.  reduce 177
+
+
+state 300
+	expr : varref RCV $$34 . '[' rargs ']'  (206)
+
+	'['  shift 388
+	.  error
+
+
+state 301
+	expr : varref R_RCV $$35 . '[' rargs ']'  (208)
+
+	'['  shift 389
+	.  error
+
+
+state 302
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr IMPLIES expr .  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 227
+	error  reduce 227
+	C_CODE  reduce 227
+	C_DECL  reduce 227
+	C_STATE  reduce 227
+	C_TRACK  reduce 227
+	TYPEDEF  reduce 227
+	INLINE  reduce 227
+	SEMI  reduce 227
+	ARROW  reduce 227
+	FI  reduce 227
+	OD  reduce 227
+	SEP  reduce 227
+	DOTDOT  reduce 227
+	UNLESS  reduce 227
+	ACTIVE  reduce 227
+	PROCTYPE  reduce 227
+	D_PROCTYPE  reduce 227
+	HIDDEN  reduce 227
+	SHOW  reduce 227
+	ISLOCAL  reduce 227
+	TYPE  reduce 227
+	UNAME  reduce 227
+	CLAIM  reduce 227
+	TRACE  reduce 227
+	INIT  reduce 227
+	LTL  reduce 227
+	IMPLIES  reduce 227
+	EQUIV  reduce 227
+	'('  reduce 227
+	')'  reduce 227
+	']'  reduce 227
+	'}'  reduce 227
+	':'  reduce 227
+	','  reduce 227
+
+
+state 303
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	ltl_expr : expr EQUIV expr .  (228)
+
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 228
+	error  reduce 228
+	C_CODE  reduce 228
+	C_DECL  reduce 228
+	C_STATE  reduce 228
+	C_TRACK  reduce 228
+	TYPEDEF  reduce 228
+	INLINE  reduce 228
+	SEMI  reduce 228
+	ARROW  reduce 228
+	FI  reduce 228
+	OD  reduce 228
+	SEP  reduce 228
+	DOTDOT  reduce 228
+	UNLESS  reduce 228
+	ACTIVE  reduce 228
+	PROCTYPE  reduce 228
+	D_PROCTYPE  reduce 228
+	HIDDEN  reduce 228
+	SHOW  reduce 228
+	ISLOCAL  reduce 228
+	TYPE  reduce 228
+	UNAME  reduce 228
+	CLAIM  reduce 228
+	TRACE  reduce 228
+	INIT  reduce 228
+	LTL  reduce 228
+	IMPLIES  reduce 228
+	EQUIV  reduce 228
+	'('  reduce 228
+	')'  reduce 228
+	']'  reduce 228
+	'}'  reduce 228
+	':'  reduce 228
+	','  reduce 228
+
+
+state 304
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr OR expr .  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 193
+	error  reduce 193
+	C_CODE  reduce 193
+	C_DECL  reduce 193
+	C_STATE  reduce 193
+	C_TRACK  reduce 193
+	TYPEDEF  reduce 193
+	INLINE  reduce 193
+	SEMI  reduce 193
+	ARROW  reduce 193
+	FI  reduce 193
+	OD  reduce 193
+	SEP  reduce 193
+	DOTDOT  reduce 193
+	UNLESS  reduce 193
+	ACTIVE  reduce 193
+	PROCTYPE  reduce 193
+	D_PROCTYPE  reduce 193
+	HIDDEN  reduce 193
+	SHOW  reduce 193
+	ISLOCAL  reduce 193
+	TYPE  reduce 193
+	UNAME  reduce 193
+	CLAIM  reduce 193
+	TRACE  reduce 193
+	INIT  reduce 193
+	LTL  reduce 193
+	IMPLIES  reduce 193
+	EQUIV  reduce 193
+	OR  reduce 193
+	'('  reduce 193
+	')'  reduce 193
+	']'  reduce 193
+	'}'  reduce 193
+	':'  reduce 193
+	','  reduce 193
+
+
+state 305
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr AND expr .  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 192
+	error  reduce 192
+	C_CODE  reduce 192
+	C_DECL  reduce 192
+	C_STATE  reduce 192
+	C_TRACK  reduce 192
+	TYPEDEF  reduce 192
+	INLINE  reduce 192
+	SEMI  reduce 192
+	ARROW  reduce 192
+	FI  reduce 192
+	OD  reduce 192
+	SEP  reduce 192
+	DOTDOT  reduce 192
+	UNLESS  reduce 192
+	ACTIVE  reduce 192
+	PROCTYPE  reduce 192
+	D_PROCTYPE  reduce 192
+	HIDDEN  reduce 192
+	SHOW  reduce 192
+	ISLOCAL  reduce 192
+	TYPE  reduce 192
+	UNAME  reduce 192
+	CLAIM  reduce 192
+	TRACE  reduce 192
+	INIT  reduce 192
+	LTL  reduce 192
+	IMPLIES  reduce 192
+	EQUIV  reduce 192
+	OR  reduce 192
+	AND  reduce 192
+	'('  reduce 192
+	')'  reduce 192
+	']'  reduce 192
+	'}'  reduce 192
+	':'  reduce 192
+	','  reduce 192
+
+
+state 306
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr UNTIL expr .  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 224
+	error  reduce 224
+	C_CODE  reduce 224
+	C_DECL  reduce 224
+	C_STATE  reduce 224
+	C_TRACK  reduce 224
+	TYPEDEF  reduce 224
+	INLINE  reduce 224
+	SEMI  reduce 224
+	ARROW  reduce 224
+	FI  reduce 224
+	OD  reduce 224
+	SEP  reduce 224
+	DOTDOT  reduce 224
+	UNLESS  reduce 224
+	ACTIVE  reduce 224
+	PROCTYPE  reduce 224
+	D_PROCTYPE  reduce 224
+	HIDDEN  reduce 224
+	SHOW  reduce 224
+	ISLOCAL  reduce 224
+	TYPE  reduce 224
+	UNAME  reduce 224
+	CLAIM  reduce 224
+	TRACE  reduce 224
+	INIT  reduce 224
+	LTL  reduce 224
+	IMPLIES  reduce 224
+	EQUIV  reduce 224
+	OR  reduce 224
+	AND  reduce 224
+	UNTIL  reduce 224
+	WEAK_UNTIL  reduce 224
+	RELEASE  reduce 224
+	'('  reduce 224
+	')'  reduce 224
+	']'  reduce 224
+	'}'  reduce 224
+	':'  reduce 224
+	','  reduce 224
+
+
+state 307
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr WEAK_UNTIL expr .  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 226
+	error  reduce 226
+	C_CODE  reduce 226
+	C_DECL  reduce 226
+	C_STATE  reduce 226
+	C_TRACK  reduce 226
+	TYPEDEF  reduce 226
+	INLINE  reduce 226
+	SEMI  reduce 226
+	ARROW  reduce 226
+	FI  reduce 226
+	OD  reduce 226
+	SEP  reduce 226
+	DOTDOT  reduce 226
+	UNLESS  reduce 226
+	ACTIVE  reduce 226
+	PROCTYPE  reduce 226
+	D_PROCTYPE  reduce 226
+	HIDDEN  reduce 226
+	SHOW  reduce 226
+	ISLOCAL  reduce 226
+	TYPE  reduce 226
+	UNAME  reduce 226
+	CLAIM  reduce 226
+	TRACE  reduce 226
+	INIT  reduce 226
+	LTL  reduce 226
+	IMPLIES  reduce 226
+	EQUIV  reduce 226
+	OR  reduce 226
+	AND  reduce 226
+	UNTIL  reduce 226
+	WEAK_UNTIL  reduce 226
+	RELEASE  reduce 226
+	'('  reduce 226
+	')'  reduce 226
+	']'  reduce 226
+	'}'  reduce 226
+	':'  reduce 226
+	','  reduce 226
+
+
+state 308
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr RELEASE expr .  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 225
+	error  reduce 225
+	C_CODE  reduce 225
+	C_DECL  reduce 225
+	C_STATE  reduce 225
+	C_TRACK  reduce 225
+	TYPEDEF  reduce 225
+	INLINE  reduce 225
+	SEMI  reduce 225
+	ARROW  reduce 225
+	FI  reduce 225
+	OD  reduce 225
+	SEP  reduce 225
+	DOTDOT  reduce 225
+	UNLESS  reduce 225
+	ACTIVE  reduce 225
+	PROCTYPE  reduce 225
+	D_PROCTYPE  reduce 225
+	HIDDEN  reduce 225
+	SHOW  reduce 225
+	ISLOCAL  reduce 225
+	TYPE  reduce 225
+	UNAME  reduce 225
+	CLAIM  reduce 225
+	TRACE  reduce 225
+	INIT  reduce 225
+	LTL  reduce 225
+	IMPLIES  reduce 225
+	EQUIV  reduce 225
+	OR  reduce 225
+	AND  reduce 225
+	UNTIL  reduce 225
+	WEAK_UNTIL  reduce 225
+	RELEASE  reduce 225
+	'('  reduce 225
+	')'  reduce 225
+	']'  reduce 225
+	'}'  reduce 225
+	':'  reduce 225
+	','  reduce 225
+
+
+state 309
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr '|' expr .  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 185
+	error  reduce 185
+	C_CODE  reduce 185
+	C_DECL  reduce 185
+	C_STATE  reduce 185
+	C_TRACK  reduce 185
+	TYPEDEF  reduce 185
+	INLINE  reduce 185
+	SEMI  reduce 185
+	ARROW  reduce 185
+	FI  reduce 185
+	OD  reduce 185
+	SEP  reduce 185
+	DOTDOT  reduce 185
+	UNLESS  reduce 185
+	ACTIVE  reduce 185
+	PROCTYPE  reduce 185
+	D_PROCTYPE  reduce 185
+	HIDDEN  reduce 185
+	SHOW  reduce 185
+	ISLOCAL  reduce 185
+	TYPE  reduce 185
+	UNAME  reduce 185
+	CLAIM  reduce 185
+	TRACE  reduce 185
+	INIT  reduce 185
+	LTL  reduce 185
+	IMPLIES  reduce 185
+	EQUIV  reduce 185
+	OR  reduce 185
+	AND  reduce 185
+	UNTIL  reduce 185
+	WEAK_UNTIL  reduce 185
+	RELEASE  reduce 185
+	'|'  reduce 185
+	'('  reduce 185
+	')'  reduce 185
+	']'  reduce 185
+	'}'  reduce 185
+	':'  reduce 185
+	','  reduce 185
+
+
+state 310
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr '^' expr .  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 184
+	error  reduce 184
+	C_CODE  reduce 184
+	C_DECL  reduce 184
+	C_STATE  reduce 184
+	C_TRACK  reduce 184
+	TYPEDEF  reduce 184
+	INLINE  reduce 184
+	SEMI  reduce 184
+	ARROW  reduce 184
+	FI  reduce 184
+	OD  reduce 184
+	SEP  reduce 184
+	DOTDOT  reduce 184
+	UNLESS  reduce 184
+	ACTIVE  reduce 184
+	PROCTYPE  reduce 184
+	D_PROCTYPE  reduce 184
+	HIDDEN  reduce 184
+	SHOW  reduce 184
+	ISLOCAL  reduce 184
+	TYPE  reduce 184
+	UNAME  reduce 184
+	CLAIM  reduce 184
+	TRACE  reduce 184
+	INIT  reduce 184
+	LTL  reduce 184
+	IMPLIES  reduce 184
+	EQUIV  reduce 184
+	OR  reduce 184
+	AND  reduce 184
+	UNTIL  reduce 184
+	WEAK_UNTIL  reduce 184
+	RELEASE  reduce 184
+	'|'  reduce 184
+	'^'  reduce 184
+	'('  reduce 184
+	')'  reduce 184
+	']'  reduce 184
+	'}'  reduce 184
+	':'  reduce 184
+	','  reduce 184
+
+
+state 311
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr '&' expr .  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 183
+	error  reduce 183
+	C_CODE  reduce 183
+	C_DECL  reduce 183
+	C_STATE  reduce 183
+	C_TRACK  reduce 183
+	TYPEDEF  reduce 183
+	INLINE  reduce 183
+	SEMI  reduce 183
+	ARROW  reduce 183
+	FI  reduce 183
+	OD  reduce 183
+	SEP  reduce 183
+	DOTDOT  reduce 183
+	UNLESS  reduce 183
+	ACTIVE  reduce 183
+	PROCTYPE  reduce 183
+	D_PROCTYPE  reduce 183
+	HIDDEN  reduce 183
+	SHOW  reduce 183
+	ISLOCAL  reduce 183
+	TYPE  reduce 183
+	UNAME  reduce 183
+	CLAIM  reduce 183
+	TRACE  reduce 183
+	INIT  reduce 183
+	LTL  reduce 183
+	IMPLIES  reduce 183
+	EQUIV  reduce 183
+	OR  reduce 183
+	AND  reduce 183
+	UNTIL  reduce 183
+	WEAK_UNTIL  reduce 183
+	RELEASE  reduce 183
+	'|'  reduce 183
+	'^'  reduce 183
+	'&'  reduce 183
+	'('  reduce 183
+	')'  reduce 183
+	']'  reduce 183
+	'}'  reduce 183
+	':'  reduce 183
+	','  reduce 183
+
+
+state 312
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr EQ expr .  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 190
+	error  reduce 190
+	C_CODE  reduce 190
+	C_DECL  reduce 190
+	C_STATE  reduce 190
+	C_TRACK  reduce 190
+	TYPEDEF  reduce 190
+	INLINE  reduce 190
+	SEMI  reduce 190
+	ARROW  reduce 190
+	FI  reduce 190
+	OD  reduce 190
+	SEP  reduce 190
+	DOTDOT  reduce 190
+	UNLESS  reduce 190
+	ACTIVE  reduce 190
+	PROCTYPE  reduce 190
+	D_PROCTYPE  reduce 190
+	HIDDEN  reduce 190
+	SHOW  reduce 190
+	ISLOCAL  reduce 190
+	TYPE  reduce 190
+	UNAME  reduce 190
+	CLAIM  reduce 190
+	TRACE  reduce 190
+	INIT  reduce 190
+	LTL  reduce 190
+	IMPLIES  reduce 190
+	EQUIV  reduce 190
+	OR  reduce 190
+	AND  reduce 190
+	UNTIL  reduce 190
+	WEAK_UNTIL  reduce 190
+	RELEASE  reduce 190
+	'|'  reduce 190
+	'^'  reduce 190
+	'&'  reduce 190
+	EQ  reduce 190
+	NE  reduce 190
+	'('  reduce 190
+	')'  reduce 190
+	']'  reduce 190
+	'}'  reduce 190
+	':'  reduce 190
+	','  reduce 190
+
+
+state 313
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr NE expr .  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 191
+	error  reduce 191
+	C_CODE  reduce 191
+	C_DECL  reduce 191
+	C_STATE  reduce 191
+	C_TRACK  reduce 191
+	TYPEDEF  reduce 191
+	INLINE  reduce 191
+	SEMI  reduce 191
+	ARROW  reduce 191
+	FI  reduce 191
+	OD  reduce 191
+	SEP  reduce 191
+	DOTDOT  reduce 191
+	UNLESS  reduce 191
+	ACTIVE  reduce 191
+	PROCTYPE  reduce 191
+	D_PROCTYPE  reduce 191
+	HIDDEN  reduce 191
+	SHOW  reduce 191
+	ISLOCAL  reduce 191
+	TYPE  reduce 191
+	UNAME  reduce 191
+	CLAIM  reduce 191
+	TRACE  reduce 191
+	INIT  reduce 191
+	LTL  reduce 191
+	IMPLIES  reduce 191
+	EQUIV  reduce 191
+	OR  reduce 191
+	AND  reduce 191
+	UNTIL  reduce 191
+	WEAK_UNTIL  reduce 191
+	RELEASE  reduce 191
+	'|'  reduce 191
+	'^'  reduce 191
+	'&'  reduce 191
+	EQ  reduce 191
+	NE  reduce 191
+	'('  reduce 191
+	')'  reduce 191
+	']'  reduce 191
+	'}'  reduce 191
+	':'  reduce 191
+	','  reduce 191
+
+
+state 314
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr GT expr .  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 186
+	error  reduce 186
+	C_CODE  reduce 186
+	C_DECL  reduce 186
+	C_STATE  reduce 186
+	C_TRACK  reduce 186
+	TYPEDEF  reduce 186
+	INLINE  reduce 186
+	SEMI  reduce 186
+	ARROW  reduce 186
+	FI  reduce 186
+	OD  reduce 186
+	SEP  reduce 186
+	DOTDOT  reduce 186
+	UNLESS  reduce 186
+	ACTIVE  reduce 186
+	PROCTYPE  reduce 186
+	D_PROCTYPE  reduce 186
+	HIDDEN  reduce 186
+	SHOW  reduce 186
+	ISLOCAL  reduce 186
+	TYPE  reduce 186
+	UNAME  reduce 186
+	CLAIM  reduce 186
+	TRACE  reduce 186
+	INIT  reduce 186
+	LTL  reduce 186
+	IMPLIES  reduce 186
+	EQUIV  reduce 186
+	OR  reduce 186
+	AND  reduce 186
+	UNTIL  reduce 186
+	WEAK_UNTIL  reduce 186
+	RELEASE  reduce 186
+	'|'  reduce 186
+	'^'  reduce 186
+	'&'  reduce 186
+	EQ  reduce 186
+	NE  reduce 186
+	GT  reduce 186
+	LT  reduce 186
+	GE  reduce 186
+	LE  reduce 186
+	'('  reduce 186
+	')'  reduce 186
+	']'  reduce 186
+	'}'  reduce 186
+	':'  reduce 186
+	','  reduce 186
+
+
+state 315
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr LT expr .  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 187
+	error  reduce 187
+	C_CODE  reduce 187
+	C_DECL  reduce 187
+	C_STATE  reduce 187
+	C_TRACK  reduce 187
+	TYPEDEF  reduce 187
+	INLINE  reduce 187
+	SEMI  reduce 187
+	ARROW  reduce 187
+	FI  reduce 187
+	OD  reduce 187
+	SEP  reduce 187
+	DOTDOT  reduce 187
+	UNLESS  reduce 187
+	ACTIVE  reduce 187
+	PROCTYPE  reduce 187
+	D_PROCTYPE  reduce 187
+	HIDDEN  reduce 187
+	SHOW  reduce 187
+	ISLOCAL  reduce 187
+	TYPE  reduce 187
+	UNAME  reduce 187
+	CLAIM  reduce 187
+	TRACE  reduce 187
+	INIT  reduce 187
+	LTL  reduce 187
+	IMPLIES  reduce 187
+	EQUIV  reduce 187
+	OR  reduce 187
+	AND  reduce 187
+	UNTIL  reduce 187
+	WEAK_UNTIL  reduce 187
+	RELEASE  reduce 187
+	'|'  reduce 187
+	'^'  reduce 187
+	'&'  reduce 187
+	EQ  reduce 187
+	NE  reduce 187
+	GT  reduce 187
+	LT  reduce 187
+	GE  reduce 187
+	LE  reduce 187
+	'('  reduce 187
+	')'  reduce 187
+	']'  reduce 187
+	'}'  reduce 187
+	':'  reduce 187
+	','  reduce 187
+
+
+state 316
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr GE expr .  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 188
+	error  reduce 188
+	C_CODE  reduce 188
+	C_DECL  reduce 188
+	C_STATE  reduce 188
+	C_TRACK  reduce 188
+	TYPEDEF  reduce 188
+	INLINE  reduce 188
+	SEMI  reduce 188
+	ARROW  reduce 188
+	FI  reduce 188
+	OD  reduce 188
+	SEP  reduce 188
+	DOTDOT  reduce 188
+	UNLESS  reduce 188
+	ACTIVE  reduce 188
+	PROCTYPE  reduce 188
+	D_PROCTYPE  reduce 188
+	HIDDEN  reduce 188
+	SHOW  reduce 188
+	ISLOCAL  reduce 188
+	TYPE  reduce 188
+	UNAME  reduce 188
+	CLAIM  reduce 188
+	TRACE  reduce 188
+	INIT  reduce 188
+	LTL  reduce 188
+	IMPLIES  reduce 188
+	EQUIV  reduce 188
+	OR  reduce 188
+	AND  reduce 188
+	UNTIL  reduce 188
+	WEAK_UNTIL  reduce 188
+	RELEASE  reduce 188
+	'|'  reduce 188
+	'^'  reduce 188
+	'&'  reduce 188
+	EQ  reduce 188
+	NE  reduce 188
+	GT  reduce 188
+	LT  reduce 188
+	GE  reduce 188
+	LE  reduce 188
+	'('  reduce 188
+	')'  reduce 188
+	']'  reduce 188
+	'}'  reduce 188
+	':'  reduce 188
+	','  reduce 188
+
+
+state 317
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr LE expr .  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 189
+	error  reduce 189
+	C_CODE  reduce 189
+	C_DECL  reduce 189
+	C_STATE  reduce 189
+	C_TRACK  reduce 189
+	TYPEDEF  reduce 189
+	INLINE  reduce 189
+	SEMI  reduce 189
+	ARROW  reduce 189
+	FI  reduce 189
+	OD  reduce 189
+	SEP  reduce 189
+	DOTDOT  reduce 189
+	UNLESS  reduce 189
+	ACTIVE  reduce 189
+	PROCTYPE  reduce 189
+	D_PROCTYPE  reduce 189
+	HIDDEN  reduce 189
+	SHOW  reduce 189
+	ISLOCAL  reduce 189
+	TYPE  reduce 189
+	UNAME  reduce 189
+	CLAIM  reduce 189
+	TRACE  reduce 189
+	INIT  reduce 189
+	LTL  reduce 189
+	IMPLIES  reduce 189
+	EQUIV  reduce 189
+	OR  reduce 189
+	AND  reduce 189
+	UNTIL  reduce 189
+	WEAK_UNTIL  reduce 189
+	RELEASE  reduce 189
+	'|'  reduce 189
+	'^'  reduce 189
+	'&'  reduce 189
+	EQ  reduce 189
+	NE  reduce 189
+	GT  reduce 189
+	LT  reduce 189
+	GE  reduce 189
+	LE  reduce 189
+	'('  reduce 189
+	')'  reduce 189
+	']'  reduce 189
+	'}'  reduce 189
+	':'  reduce 189
+	','  reduce 189
+
+
+state 318
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr LSHIFT expr .  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 194
+	error  reduce 194
+	C_CODE  reduce 194
+	C_DECL  reduce 194
+	C_STATE  reduce 194
+	C_TRACK  reduce 194
+	TYPEDEF  reduce 194
+	INLINE  reduce 194
+	SEMI  reduce 194
+	ARROW  reduce 194
+	FI  reduce 194
+	OD  reduce 194
+	SEP  reduce 194
+	DOTDOT  reduce 194
+	UNLESS  reduce 194
+	ACTIVE  reduce 194
+	PROCTYPE  reduce 194
+	D_PROCTYPE  reduce 194
+	HIDDEN  reduce 194
+	SHOW  reduce 194
+	ISLOCAL  reduce 194
+	TYPE  reduce 194
+	UNAME  reduce 194
+	CLAIM  reduce 194
+	TRACE  reduce 194
+	INIT  reduce 194
+	LTL  reduce 194
+	IMPLIES  reduce 194
+	EQUIV  reduce 194
+	OR  reduce 194
+	AND  reduce 194
+	UNTIL  reduce 194
+	WEAK_UNTIL  reduce 194
+	RELEASE  reduce 194
+	'|'  reduce 194
+	'^'  reduce 194
+	'&'  reduce 194
+	EQ  reduce 194
+	NE  reduce 194
+	GT  reduce 194
+	LT  reduce 194
+	GE  reduce 194
+	LE  reduce 194
+	LSHIFT  reduce 194
+	RSHIFT  reduce 194
+	'('  reduce 194
+	')'  reduce 194
+	']'  reduce 194
+	'}'  reduce 194
+	':'  reduce 194
+	','  reduce 194
+
+
+state 319
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : expr RSHIFT expr .  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 195
+	error  reduce 195
+	C_CODE  reduce 195
+	C_DECL  reduce 195
+	C_STATE  reduce 195
+	C_TRACK  reduce 195
+	TYPEDEF  reduce 195
+	INLINE  reduce 195
+	SEMI  reduce 195
+	ARROW  reduce 195
+	FI  reduce 195
+	OD  reduce 195
+	SEP  reduce 195
+	DOTDOT  reduce 195
+	UNLESS  reduce 195
+	ACTIVE  reduce 195
+	PROCTYPE  reduce 195
+	D_PROCTYPE  reduce 195
+	HIDDEN  reduce 195
+	SHOW  reduce 195
+	ISLOCAL  reduce 195
+	TYPE  reduce 195
+	UNAME  reduce 195
+	CLAIM  reduce 195
+	TRACE  reduce 195
+	INIT  reduce 195
+	LTL  reduce 195
+	IMPLIES  reduce 195
+	EQUIV  reduce 195
+	OR  reduce 195
+	AND  reduce 195
+	UNTIL  reduce 195
+	WEAK_UNTIL  reduce 195
+	RELEASE  reduce 195
+	'|'  reduce 195
+	'^'  reduce 195
+	'&'  reduce 195
+	EQ  reduce 195
+	NE  reduce 195
+	GT  reduce 195
+	LT  reduce 195
+	GE  reduce 195
+	LE  reduce 195
+	LSHIFT  reduce 195
+	RSHIFT  reduce 195
+	'('  reduce 195
+	')'  reduce 195
+	']'  reduce 195
+	'}'  reduce 195
+	':'  reduce 195
+	','  reduce 195
+
+
+state 320
+	expr : expr . '+' expr  (178)
+	expr : expr '+' expr .  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 178
+	error  reduce 178
+	C_CODE  reduce 178
+	C_DECL  reduce 178
+	C_STATE  reduce 178
+	C_TRACK  reduce 178
+	TYPEDEF  reduce 178
+	INLINE  reduce 178
+	SEMI  reduce 178
+	ARROW  reduce 178
+	FI  reduce 178
+	OD  reduce 178
+	SEP  reduce 178
+	DOTDOT  reduce 178
+	UNLESS  reduce 178
+	ACTIVE  reduce 178
+	PROCTYPE  reduce 178
+	D_PROCTYPE  reduce 178
+	HIDDEN  reduce 178
+	SHOW  reduce 178
+	ISLOCAL  reduce 178
+	TYPE  reduce 178
+	UNAME  reduce 178
+	CLAIM  reduce 178
+	TRACE  reduce 178
+	INIT  reduce 178
+	LTL  reduce 178
+	IMPLIES  reduce 178
+	EQUIV  reduce 178
+	OR  reduce 178
+	AND  reduce 178
+	UNTIL  reduce 178
+	WEAK_UNTIL  reduce 178
+	RELEASE  reduce 178
+	'|'  reduce 178
+	'^'  reduce 178
+	'&'  reduce 178
+	EQ  reduce 178
+	NE  reduce 178
+	GT  reduce 178
+	LT  reduce 178
+	GE  reduce 178
+	LE  reduce 178
+	LSHIFT  reduce 178
+	RSHIFT  reduce 178
+	'+'  reduce 178
+	'-'  reduce 178
+	'('  reduce 178
+	')'  reduce 178
+	']'  reduce 178
+	'}'  reduce 178
+	':'  reduce 178
+	','  reduce 178
+
+
+state 321
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr '-' expr .  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	$end  reduce 179
+	error  reduce 179
+	C_CODE  reduce 179
+	C_DECL  reduce 179
+	C_STATE  reduce 179
+	C_TRACK  reduce 179
+	TYPEDEF  reduce 179
+	INLINE  reduce 179
+	SEMI  reduce 179
+	ARROW  reduce 179
+	FI  reduce 179
+	OD  reduce 179
+	SEP  reduce 179
+	DOTDOT  reduce 179
+	UNLESS  reduce 179
+	ACTIVE  reduce 179
+	PROCTYPE  reduce 179
+	D_PROCTYPE  reduce 179
+	HIDDEN  reduce 179
+	SHOW  reduce 179
+	ISLOCAL  reduce 179
+	TYPE  reduce 179
+	UNAME  reduce 179
+	CLAIM  reduce 179
+	TRACE  reduce 179
+	INIT  reduce 179
+	LTL  reduce 179
+	IMPLIES  reduce 179
+	EQUIV  reduce 179
+	OR  reduce 179
+	AND  reduce 179
+	UNTIL  reduce 179
+	WEAK_UNTIL  reduce 179
+	RELEASE  reduce 179
+	'|'  reduce 179
+	'^'  reduce 179
+	'&'  reduce 179
+	EQ  reduce 179
+	NE  reduce 179
+	GT  reduce 179
+	LT  reduce 179
+	GE  reduce 179
+	LE  reduce 179
+	LSHIFT  reduce 179
+	RSHIFT  reduce 179
+	'+'  reduce 179
+	'-'  reduce 179
+	'('  reduce 179
+	')'  reduce 179
+	']'  reduce 179
+	'}'  reduce 179
+	':'  reduce 179
+	','  reduce 179
+
+
+state 322
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr '*' expr .  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	.  reduce 180
+
+
+state 323
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr '/' expr .  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	.  reduce 181
+
+
+state 324
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr '%' expr .  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	.  reduce 182
+
+
+state 325
+	arg : expr ',' arg .  (260)
+
+	.  reduce 260
+
+
+state 326
+	sfld : '.' . cmpnd  (101)
+
+	NAME  shift 115
+	.  error
+
+	cmpnd  goto 390
+	pfld  goto 129
+
+
+state 327
+	cmpnd : pfld $$13 sfld .  (99)
+
+	.  reduce 99
+
+
+state 328
+	Stmnt : PRINT l_par STRING . $$20 prargs r_par  (129)
+	$$20 : .  (128)
+
+	.  reduce 128
+
+	$$20  goto 391
+
+
+state 329
+	Stmnt : PRINTM l_par CONST . r_par  (131)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 392
+
+
+state 330
+	Stmnt : PRINTM l_par varref . r_par  (130)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 393
+
+
+state 331
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	two_args : expr . ',' expr  (252)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	','  shift 394
+	.  error
+
+
+state 332
+	Stmnt : SET_P l_par two_args . r_par  (127)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 395
+
+
+state 333
+	option : SEP $$32 . sequence OS  (160)
+	vis : .  (67)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	XU  shift 158
+	NAME  shift 159
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	one_decl  goto 162
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	sequence  goto 396
+	step  goto 167
+	stmnt  goto 168
+	vis  goto 34
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 334
+	Special : IF options FI .  (116)
+
+	.  reduce 116
+
+
+state 335
+	options : option options .  (158)
+
+	.  reduce 158
+
+
+state 336
+	Special : DO $$19 options . OD  (118)
+
+	OD  shift 397
+	.  error
+
+
+state 337
+	for_pre : FOR l_par $$14 . varref  (105)
+
+	NAME  shift 115
+	.  error
+
+	varref  goto 398
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 338
+	Special : SELECT l_par varref . ':' expr DOTDOT expr r_par  (115)
+
+	':'  shift 399
+	.  error
+
+
+state 339
+	Stmnt : ATOMIC '{' $$25 . sequence OS '}'  (145)
+	vis : .  (67)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	XU  shift 158
+	NAME  shift 159
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	one_decl  goto 162
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	sequence  goto 400
+	step  goto 167
+	stmnt  goto 168
+	vis  goto 34
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 340
+	Stmnt : D_STEP '{' $$26 . sequence OS '}'  (147)
+	vis : .  (67)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	XU  shift 158
+	NAME  shift 159
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	one_decl  goto 162
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	sequence  goto 401
+	step  goto 167
+	stmnt  goto 168
+	vis  goto 34
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 341
+	Probe : FULL l_par varref . r_par  (240)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 402
+
+
+state 342
+	Probe : EMPTY l_par varref . r_par  (242)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 403
+
+
+state 343
+	Probe : NFULL l_par varref . r_par  (241)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 404
+
+
+state 344
+	Probe : NEMPTY l_par varref . r_par  (243)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 405
+
+
+state 345
+	vref_lst : varref ',' . vref_lst  (81)
+
+	NAME  shift 115
+	.  error
+
+	vref_lst  goto 406
+	varref  goto 254
+	cmpnd  goto 128
+	pfld  goto 129
+
+
+state 346
+	step : NAME ':' XU .  (63)
+
+	.  reduce 63
+
+
+state 347
+	pfld : NAME .  (95)
+	pfld : NAME . $$12 '[' expr ']'  (97)
+	Special : NAME . ':' stmnt  (121)
+	Special : NAME . ':'  (122)
+	$$12 : .  (96)
+
+	':'  shift 407
+	SEMI  reduce 95
+	ARROW  reduce 95
+	FI  reduce 95
+	OD  reduce 95
+	SEP  reduce 95
+	UNLESS  reduce 95
+	ASGN  reduce 95
+	SND  reduce 95
+	O_SND  reduce 95
+	RCV  reduce 95
+	R_RCV  reduce 95
+	IMPLIES  reduce 95
+	EQUIV  reduce 95
+	OR  reduce 95
+	AND  reduce 95
+	UNTIL  reduce 95
+	WEAK_UNTIL  reduce 95
+	RELEASE  reduce 95
+	'|'  reduce 95
+	'^'  reduce 95
+	'&'  reduce 95
+	EQ  reduce 95
+	NE  reduce 95
+	GT  reduce 95
+	LT  reduce 95
+	GE  reduce 95
+	LE  reduce 95
+	LSHIFT  reduce 95
+	RSHIFT  reduce 95
+	'+'  reduce 95
+	'-'  reduce 95
+	'*'  reduce 95
+	'/'  reduce 95
+	'%'  reduce 95
+	INCR  reduce 95
+	DECR  reduce 95
+	'['  reduce 96
+	'}'  reduce 95
+	'.'  reduce 95
+
+	$$12  goto 196
+
+
+state 348
+	step : NAME ':' one_decl .  (62)
+
+	.  reduce 62
+
+
+state 349
+	Special : NAME ':' stmnt .  (121)
+
+	.  reduce 121
+
+
+state 350
+	Stmnt : INAME $$28 l_par . args r_par $$29 Stmnt  (152)
+	args : .  (253)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	')'  reduce 253
+
+	l_par  goto 123
+	args  goto 408
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 127
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	arg  goto 131
+
+
+state 351
+	sequence : sequence . MS step  (59)
+	Stmnt : '{' $$27 sequence . OS '}'  (149)
+	OS : .  (161)
+
+	SEMI  shift 8
+	ARROW  shift 9
+	'}'  reduce 161
+
+	semi  goto 260
+	OS  goto 409
+	MS  goto 262
+
+
+state 352
+	Expr : l_par Expr r_par .  (233)
+
+	.  reduce 233
+
+
+state 353
+	body : '{' $$9 sequence OS $$10 . '}'  (57)
+
+	'}'  shift 410
+	.  error
+
+
+state 354
+	MS : MS semi .  (166)
+
+	.  reduce 166
+
+
+state 355
+	sequence : sequence MS step .  (59)
+
+	.  reduce 59
+
+
+state 356
+	step : stmnt UNLESS $$11 . stmnt  (66)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 347
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	.  error
+
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	stmnt  goto 411
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 357
+	Stmnt : varref ASGN INAME . $$30 l_par args r_par $$31 Stmnt  (155)
+	$$30 : .  (153)
+
+	.  reduce 153
+
+	$$30  goto 412
+
+
+state 358
+	Stmnt : varref ASGN full_expr .  (124)
+
+	.  reduce 124
+
+
+state 359
+	Special : varref SND $$16 . margs  (110)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 413
+	cmpnd  goto 128
+	pfld  goto 129
+	margs  goto 414
+	ltl_expr  goto 130
+	arg  goto 415
+
+
+state 360
+	Stmnt : varref O_SND $$24 . margs  (141)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 413
+	cmpnd  goto 128
+	pfld  goto 129
+	margs  goto 416
+	ltl_expr  goto 130
+	arg  goto 415
+
+
+state 361
+	Special : varref RCV $$15 . rargs  (108)
+
+	EVAL  shift 417
+	CONST  shift 418
+	NAME  shift 115
+	'-'  shift 419
+	'('  shift 57
+	.  error
+
+	l_par  goto 420
+	varref  goto 421
+	cmpnd  goto 128
+	pfld  goto 129
+	rargs  goto 422
+	rarg  goto 423
+
+
+state 362
+	Stmnt : varref RCV $$22 . LT rargs GT  (137)
+
+	LT  shift 424
+	.  error
+
+
+state 363
+	Stmnt : varref R_RCV $$21 . rargs  (135)
+
+	EVAL  shift 417
+	CONST  shift 418
+	NAME  shift 115
+	'-'  shift 419
+	'('  shift 57
+	.  error
+
+	l_par  goto 420
+	varref  goto 421
+	cmpnd  goto 128
+	pfld  goto 129
+	rargs  goto 425
+	rarg  goto 423
+
+
+state 364
+	Stmnt : varref R_RCV $$23 . LT rargs GT  (139)
+
+	LT  shift 426
+	.  error
+
+
+state 365
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr OR expr .  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	Expr : expr . AND Expr  (236)
+	Expr : expr . OR Expr  (239)
+
+	AND  shift 272
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	SEMI  reduce 193
+	ARROW  reduce 193
+	FI  reduce 193
+	OD  reduce 193
+	SEP  reduce 193
+	UNLESS  reduce 193
+	IMPLIES  reduce 193
+	EQUIV  reduce 193
+	OR  reduce 193
+	')'  reduce 193
+	'}'  reduce 193
+
+
+state 366
+	Expr : Expr . AND Expr  (234)
+	Expr : Expr . AND expr  (235)
+	Expr : Expr . OR Expr  (237)
+	Expr : Expr . OR expr  (238)
+	Expr : expr OR Expr .  (239)
+
+	AND  shift 276
+	SEMI  reduce 239
+	ARROW  reduce 239
+	FI  reduce 239
+	OD  reduce 239
+	SEP  reduce 239
+	UNLESS  reduce 239
+	OR  reduce 239
+	')'  reduce 239
+	'}'  reduce 239
+
+
+state 367
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr AND expr .  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	Expr : expr . AND Expr  (236)
+	Expr : expr . OR Expr  (239)
+
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	SEMI  reduce 192
+	ARROW  reduce 192
+	FI  reduce 192
+	OD  reduce 192
+	SEP  reduce 192
+	UNLESS  reduce 192
+	IMPLIES  reduce 192
+	EQUIV  reduce 192
+	OR  reduce 192
+	AND  reduce 192
+	')'  reduce 192
+	'}'  reduce 192
+
+
+state 368
+	Expr : Expr . AND Expr  (234)
+	Expr : Expr . AND expr  (235)
+	Expr : expr AND Expr .  (236)
+	Expr : Expr . OR Expr  (237)
+	Expr : Expr . OR expr  (238)
+
+	.  reduce 236
+
+
+state 369
+	Special : for_pre IN varref . r_par $$18 for_post  (114)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 427
+
+
+state 370
+	Special : for_pre ':' expr . DOTDOT expr r_par $$17 for_post  (112)
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	DOTDOT  shift 428
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	.  error
+
+
+state 371
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	Expr : expr . AND Expr  (236)
+	Expr : Expr OR expr .  (238)
+	Expr : expr . OR Expr  (239)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	AND  shift 272
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	SEMI  reduce 238
+	ARROW  reduce 238
+	FI  reduce 238
+	OD  reduce 238
+	SEP  reduce 238
+	UNLESS  reduce 238
+	OR  reduce 238
+	')'  reduce 238
+	'}'  reduce 238
+
+
+state 372
+	Expr : Expr . AND Expr  (234)
+	Expr : Expr . AND expr  (235)
+	Expr : Expr . OR Expr  (237)
+	Expr : Expr OR Expr .  (237)
+	Expr : Expr . OR expr  (238)
+
+	AND  shift 276
+	SEMI  reduce 237
+	ARROW  reduce 237
+	FI  reduce 237
+	OD  reduce 237
+	SEP  reduce 237
+	UNLESS  reduce 237
+	OR  reduce 237
+	')'  reduce 237
+	'}'  reduce 237
+
+
+state 373
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	Expr : Expr AND expr .  (235)
+	Expr : expr . AND Expr  (236)
+	Expr : expr . OR Expr  (239)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	SEMI  reduce 235
+	ARROW  reduce 235
+	FI  reduce 235
+	OD  reduce 235
+	SEP  reduce 235
+	UNLESS  reduce 235
+	OR  reduce 235
+	AND  reduce 235
+	')'  reduce 235
+	'}'  reduce 235
+
+
+state 374
+	Expr : Expr . AND Expr  (234)
+	Expr : Expr AND Expr .  (234)
+	Expr : Expr . AND expr  (235)
+	Expr : Expr . OR Expr  (237)
+	Expr : Expr . OR expr  (238)
+
+	.  reduce 234
+
+
+state 375
+	ltl_body : '{' full_expr OS '}' .  (30)
+
+	.  reduce 30
+
+
+state 376
+	proc : inst proctype NAME $$1 l_par decl r_par . $$2 Opt_priority Opt_enabler body  (19)
+	$$2 : .  (18)
+
+	.  reduce 18
+
+	$$2  goto 429
+
+
+state 377
+	ch_init : '[' const_expr ']' . OF '{' typ_list '}'  (90)
+
+	OF  shift 430
+	.  error
+
+
+state 378
+	c_list : CONST ',' . c_list  (85)
+
+	CONST  shift 286
+	.  error
+
+	c_list  goto 431
+
+
+state 379
+	ivar : vardcl ASGN '{' c_list '}' .  (87)
+
+	.  reduce 87
+
+
+state 380
+	expr : RUN aname $$33 l_par . args r_par Opt_priority  (201)
+	args : .  (253)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	')'  reduce 253
+
+	l_par  goto 123
+	args  goto 432
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 127
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	arg  goto 131
+
+
+state 381
+	expr : LEN l_par varref r_par .  (202)
+
+	.  reduce 202
+
+
+state 382
+	expr : ENABLED l_par expr r_par .  (203)
+
+	.  reduce 203
+
+
+state 383
+	expr : GET_P l_par expr r_par .  (204)
+
+	.  reduce 204
+
+
+state 384
+	expr : PC_VAL l_par expr r_par .  (214)
+
+	.  reduce 214
+
+
+state 385
+	pfld : NAME $$12 '[' expr . ']'  (97)
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	']'  shift 433
+	.  error
+
+
+state 386
+	expr : PNAME '[' expr ']' . '@' NAME  (215)
+	expr : PNAME '[' expr ']' . ':' pfld  (216)
+
+	':'  shift 434
+	'@'  shift 435
+	.  error
+
+
+state 387
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : l_par expr ARROW expr . ':' expr r_par  (199)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	':'  shift 436
+	.  error
+
+
+state 388
+	expr : varref RCV $$34 '[' . rargs ']'  (206)
+
+	EVAL  shift 417
+	CONST  shift 418
+	NAME  shift 115
+	'-'  shift 419
+	'('  shift 57
+	.  error
+
+	l_par  goto 420
+	varref  goto 421
+	cmpnd  goto 128
+	pfld  goto 129
+	rargs  goto 437
+	rarg  goto 423
+
+
+state 389
+	expr : varref R_RCV $$35 '[' . rargs ']'  (208)
+
+	EVAL  shift 417
+	CONST  shift 418
+	NAME  shift 115
+	'-'  shift 419
+	'('  shift 57
+	.  error
+
+	l_par  goto 420
+	varref  goto 421
+	cmpnd  goto 128
+	pfld  goto 129
+	rargs  goto 438
+	rarg  goto 423
+
+
+state 390
+	sfld : '.' cmpnd .  (101)
+
+	.  reduce 101
+
+
+state 391
+	Stmnt : PRINT l_par STRING $$20 . prargs r_par  (129)
+	prargs : .  (255)
+
+	','  shift 439
+	')'  reduce 255
+
+	prargs  goto 440
+
+
+state 392
+	Stmnt : PRINTM l_par CONST r_par .  (131)
+
+	.  reduce 131
+
+
+state 393
+	Stmnt : PRINTM l_par varref r_par .  (130)
+
+	.  reduce 130
+
+
+state 394
+	two_args : expr ',' . expr  (252)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 441
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 395
+	Stmnt : SET_P l_par two_args r_par .  (127)
+
+	.  reduce 127
+
+
+state 396
+	sequence : sequence . MS step  (59)
+	option : SEP $$32 sequence . OS  (160)
+	OS : .  (161)
+
+	SEMI  shift 8
+	ARROW  shift 9
+	FI  reduce 161
+	OD  reduce 161
+	SEP  reduce 161
+
+	semi  goto 260
+	OS  goto 442
+	MS  goto 262
+
+
+state 397
+	Special : DO $$19 options OD .  (118)
+
+	.  reduce 118
+
+
+state 398
+	for_pre : FOR l_par $$14 varref .  (105)
+
+	.  reduce 105
+
+
+state 399
+	Special : SELECT l_par varref ':' . expr DOTDOT expr r_par  (115)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 443
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 400
+	sequence : sequence . MS step  (59)
+	Stmnt : ATOMIC '{' $$25 sequence . OS '}'  (145)
+	OS : .  (161)
+
+	SEMI  shift 8
+	ARROW  shift 9
+	'}'  reduce 161
+
+	semi  goto 260
+	OS  goto 444
+	MS  goto 262
+
+
+state 401
+	sequence : sequence . MS step  (59)
+	Stmnt : D_STEP '{' $$26 sequence . OS '}'  (147)
+	OS : .  (161)
+
+	SEMI  shift 8
+	ARROW  shift 9
+	'}'  reduce 161
+
+	semi  goto 260
+	OS  goto 445
+	MS  goto 262
+
+
+state 402
+	Probe : FULL l_par varref r_par .  (240)
+
+	.  reduce 240
+
+
+state 403
+	Probe : EMPTY l_par varref r_par .  (242)
+
+	.  reduce 242
+
+
+state 404
+	Probe : NFULL l_par varref r_par .  (241)
+
+	.  reduce 241
+
+
+state 405
+	Probe : NEMPTY l_par varref r_par .  (243)
+
+	.  reduce 243
+
+
+state 406
+	vref_lst : varref ',' vref_lst .  (81)
+
+	.  reduce 81
+
+
+state 407
+	Special : NAME ':' . stmnt  (121)
+	Special : NAME ':' .  (122)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 347
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	SEMI  reduce 122
+	ARROW  reduce 122
+	FI  reduce 122
+	OD  reduce 122
+	SEP  reduce 122
+	UNLESS  reduce 122
+	'}'  reduce 122
+
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	stmnt  goto 349
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 408
+	Stmnt : INAME $$28 l_par args . r_par $$29 Stmnt  (152)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 446
+
+
+state 409
+	Stmnt : '{' $$27 sequence OS . '}'  (149)
+
+	'}'  shift 447
+	.  error
+
+
+state 410
+	body : '{' $$9 sequence OS $$10 '}' .  (57)
+
+	.  reduce 57
+
+
+state 411
+	step : stmnt UNLESS $$11 stmnt .  (66)
+
+	.  reduce 66
+
+
+state 412
+	Stmnt : varref ASGN INAME $$30 . l_par args r_par $$31 Stmnt  (155)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 448
+
+
+state 413
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	margs : expr . l_par arg r_par  (258)
+	arg : expr .  (259)
+	arg : expr . ',' arg  (260)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	'('  shift 57
+	','  shift 233
+	SEMI  reduce 259
+	ARROW  reduce 259
+	FI  reduce 259
+	OD  reduce 259
+	SEP  reduce 259
+	UNLESS  reduce 259
+	'}'  reduce 259
+
+	l_par  goto 449
+
+
+state 414
+	Special : varref SND $$16 margs .  (110)
+
+	.  reduce 110
+
+
+state 415
+	margs : arg .  (257)
+
+	.  reduce 257
+
+
+state 416
+	Stmnt : varref O_SND $$24 margs .  (141)
+
+	.  reduce 141
+
+
+state 417
+	rarg : EVAL . l_par expr r_par  (262)
+
+	'('  shift 57
+	.  error
+
+	l_par  goto 450
+
+
+state 418
+	rarg : CONST .  (263)
+
+	.  reduce 263
+
+
+state 419
+	rarg : '-' . CONST  (264)
+
+	CONST  shift 451
+	.  error
+
+
+state 420
+	rargs : l_par . rargs r_par  (268)
+
+	EVAL  shift 417
+	CONST  shift 418
+	NAME  shift 115
+	'-'  shift 419
+	'('  shift 57
+	.  error
+
+	l_par  goto 420
+	varref  goto 421
+	cmpnd  goto 128
+	pfld  goto 129
+	rargs  goto 452
+	rarg  goto 423
+
+
+state 421
+	rarg : varref .  (261)
+
+	.  reduce 261
+
+
+state 422
+	Special : varref RCV $$15 rargs .  (108)
+
+	.  reduce 108
+
+
+state 423
+	rargs : rarg .  (265)
+	rargs : rarg . ',' rargs  (266)
+	rargs : rarg . l_par rargs r_par  (267)
+
+	'('  shift 57
+	','  shift 453
+	SEMI  reduce 265
+	ARROW  reduce 265
+	FI  reduce 265
+	OD  reduce 265
+	SEP  reduce 265
+	UNLESS  reduce 265
+	GT  reduce 265
+	')'  reduce 265
+	']'  reduce 265
+	'}'  reduce 265
+
+	l_par  goto 454
+
+
+state 424
+	Stmnt : varref RCV $$22 LT . rargs GT  (137)
+
+	EVAL  shift 417
+	CONST  shift 418
+	NAME  shift 115
+	'-'  shift 419
+	'('  shift 57
+	.  error
+
+	l_par  goto 420
+	varref  goto 421
+	cmpnd  goto 128
+	pfld  goto 129
+	rargs  goto 455
+	rarg  goto 423
+
+
+state 425
+	Stmnt : varref R_RCV $$21 rargs .  (135)
+
+	.  reduce 135
+
+
+state 426
+	Stmnt : varref R_RCV $$23 LT . rargs GT  (139)
+
+	EVAL  shift 417
+	CONST  shift 418
+	NAME  shift 115
+	'-'  shift 419
+	'('  shift 57
+	.  error
+
+	l_par  goto 420
+	varref  goto 421
+	cmpnd  goto 128
+	pfld  goto 129
+	rargs  goto 456
+	rarg  goto 423
+
+
+state 427
+	Special : for_pre IN varref r_par . $$18 for_post  (114)
+	$$18 : .  (113)
+
+	.  reduce 113
+
+	$$18  goto 457
+
+
+state 428
+	Special : for_pre ':' expr DOTDOT . expr r_par $$17 for_post  (112)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 458
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 429
+	proc : inst proctype NAME $$1 l_par decl r_par $$2 . Opt_priority Opt_enabler body  (19)
+	Opt_priority : .  (220)
+
+	PRIORITY  shift 67
+	PROVIDED  reduce 220
+	'{'  reduce 220
+
+	Opt_priority  goto 459
+
+
+state 430
+	ch_init : '[' const_expr ']' OF . '{' typ_list '}'  (90)
+
+	'{'  shift 460
+	.  error
+
+
+state 431
+	c_list : CONST ',' c_list .  (85)
+
+	.  reduce 85
+
+
+state 432
+	expr : RUN aname $$33 l_par args . r_par Opt_priority  (201)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 461
+
+
+state 433
+	pfld : NAME $$12 '[' expr ']' .  (97)
+
+	.  reduce 97
+
+
+state 434
+	expr : PNAME '[' expr ']' ':' . pfld  (216)
+
+	NAME  shift 115
+	.  error
+
+	pfld  goto 462
+
+
+state 435
+	expr : PNAME '[' expr ']' '@' . NAME  (215)
+
+	NAME  shift 463
+	.  error
+
+
+state 436
+	expr : l_par expr ARROW expr ':' . expr r_par  (199)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 464
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 437
+	expr : varref RCV $$34 '[' rargs . ']'  (206)
+
+	']'  shift 465
+	.  error
+
+
+state 438
+	expr : varref R_RCV $$35 '[' rargs . ']'  (208)
+
+	']'  shift 466
+	.  error
+
+
+state 439
+	prargs : ',' . arg  (256)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 127
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	arg  goto 467
+
+
+state 440
+	Stmnt : PRINT l_par STRING $$20 prargs . r_par  (129)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 468
+
+
+state 441
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	two_args : expr ',' expr .  (252)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  reduce 252
+
+
+state 442
+	option : SEP $$32 sequence OS .  (160)
+
+	.  reduce 160
+
+
+state 443
+	Special : SELECT l_par varref ':' expr . DOTDOT expr r_par  (115)
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	DOTDOT  shift 469
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	.  error
+
+
+state 444
+	Stmnt : ATOMIC '{' $$25 sequence OS . '}'  (145)
+
+	'}'  shift 470
+	.  error
+
+
+state 445
+	Stmnt : D_STEP '{' $$26 sequence OS . '}'  (147)
+
+	'}'  shift 471
+	.  error
+
+
+state 446
+	Stmnt : INAME $$28 l_par args r_par . $$29 Stmnt  (152)
+	$$29 : .  (151)
+
+	.  reduce 151
+
+	$$29  goto 472
+
+
+state 447
+	Stmnt : '{' $$27 sequence OS '}' .  (149)
+
+	.  reduce 149
+
+
+state 448
+	Stmnt : varref ASGN INAME $$30 l_par . args r_par $$31 Stmnt  (155)
+	args : .  (253)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	')'  reduce 253
+
+	l_par  goto 123
+	args  goto 473
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 127
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	arg  goto 131
+
+
+state 449
+	margs : expr l_par . arg r_par  (258)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 127
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	arg  goto 474
+
+
+state 450
+	rarg : EVAL l_par . expr r_par  (262)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 475
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 451
+	rarg : '-' CONST .  (264)
+
+	.  reduce 264
+
+
+state 452
+	rargs : l_par rargs . r_par  (268)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 476
+
+
+state 453
+	rargs : rarg ',' . rargs  (266)
+
+	EVAL  shift 417
+	CONST  shift 418
+	NAME  shift 115
+	'-'  shift 419
+	'('  shift 57
+	.  error
+
+	l_par  goto 420
+	varref  goto 421
+	cmpnd  goto 128
+	pfld  goto 129
+	rargs  goto 477
+	rarg  goto 423
+
+
+state 454
+	rargs : rarg l_par . rargs r_par  (267)
+
+	EVAL  shift 417
+	CONST  shift 418
+	NAME  shift 115
+	'-'  shift 419
+	'('  shift 57
+	.  error
+
+	l_par  goto 420
+	varref  goto 421
+	cmpnd  goto 128
+	pfld  goto 129
+	rargs  goto 478
+	rarg  goto 423
+
+
+state 455
+	Stmnt : varref RCV $$22 LT rargs . GT  (137)
+
+	GT  shift 479
+	.  error
+
+
+state 456
+	Stmnt : varref R_RCV $$23 LT rargs . GT  (139)
+
+	GT  shift 480
+	.  error
+
+
+state 457
+	Special : for_pre IN varref r_par $$18 . for_post  (114)
+
+	'{'  shift 481
+	.  error
+
+	for_post  goto 482
+
+
+state 458
+	Special : for_pre ':' expr DOTDOT expr . r_par $$17 for_post  (112)
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  shift 132
+	.  error
+
+	r_par  goto 483
+
+
+state 459
+	proc : inst proctype NAME $$1 l_par decl r_par $$2 Opt_priority . Opt_enabler body  (19)
+	Opt_enabler : .  (244)
+
+	PROVIDED  shift 484
+	'{'  reduce 244
+
+	Opt_enabler  goto 485
+
+
+state 460
+	ch_init : '[' const_expr ']' OF '{' . typ_list '}'  (90)
+
+	error  shift 486
+	TYPE  shift 487
+	UNAME  shift 488
+	.  error
+
+	typ_list  goto 489
+	basetype  goto 490
+
+
+state 461
+	expr : RUN aname $$33 l_par args r_par . Opt_priority  (201)
+	Opt_priority : .  (220)
+
+	PRIORITY  shift 67
+	$end  reduce 220
+	error  reduce 220
+	C_CODE  reduce 220
+	C_DECL  reduce 220
+	C_STATE  reduce 220
+	C_TRACK  reduce 220
+	TYPEDEF  reduce 220
+	INLINE  reduce 220
+	SEMI  reduce 220
+	ARROW  reduce 220
+	FI  reduce 220
+	OD  reduce 220
+	SEP  reduce 220
+	DOTDOT  reduce 220
+	UNLESS  reduce 220
+	ACTIVE  reduce 220
+	PROCTYPE  reduce 220
+	D_PROCTYPE  reduce 220
+	HIDDEN  reduce 220
+	SHOW  reduce 220
+	ISLOCAL  reduce 220
+	TYPE  reduce 220
+	UNAME  reduce 220
+	CLAIM  reduce 220
+	TRACE  reduce 220
+	INIT  reduce 220
+	LTL  reduce 220
+	IMPLIES  reduce 220
+	EQUIV  reduce 220
+	OR  reduce 220
+	AND  reduce 220
+	UNTIL  reduce 220
+	WEAK_UNTIL  reduce 220
+	RELEASE  reduce 220
+	'|'  reduce 220
+	'^'  reduce 220
+	'&'  reduce 220
+	EQ  reduce 220
+	NE  reduce 220
+	GT  reduce 220
+	LT  reduce 220
+	GE  reduce 220
+	LE  reduce 220
+	LSHIFT  reduce 220
+	RSHIFT  reduce 220
+	'+'  reduce 220
+	'-'  reduce 220
+	'*'  reduce 220
+	'/'  reduce 220
+	'%'  reduce 220
+	'('  reduce 220
+	')'  reduce 220
+	']'  reduce 220
+	'}'  reduce 220
+	':'  reduce 220
+	','  reduce 220
+
+	Opt_priority  goto 491
+
+
+state 462
+	expr : PNAME '[' expr ']' ':' pfld .  (216)
+
+	.  reduce 216
+
+
+state 463
+	expr : PNAME '[' expr ']' '@' NAME .  (215)
+
+	.  reduce 215
+
+
+state 464
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	expr : l_par expr ARROW expr ':' expr . r_par  (199)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  shift 132
+	.  error
+
+	r_par  goto 492
+
+
+state 465
+	expr : varref RCV $$34 '[' rargs ']' .  (206)
+
+	.  reduce 206
+
+
+state 466
+	expr : varref R_RCV $$35 '[' rargs ']' .  (208)
+
+	.  reduce 208
+
+
+state 467
+	prargs : ',' arg .  (256)
+
+	.  reduce 256
+
+
+state 468
+	Stmnt : PRINT l_par STRING $$20 prargs r_par .  (129)
+
+	.  reduce 129
+
+
+state 469
+	Special : SELECT l_par varref ':' expr DOTDOT . expr r_par  (115)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 123
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 493
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+
+
+state 470
+	Stmnt : ATOMIC '{' $$25 sequence OS '}' .  (145)
+
+	.  reduce 145
+
+
+state 471
+	Stmnt : D_STEP '{' $$26 sequence OS '}' .  (147)
+
+	.  reduce 147
+
+
+state 472
+	Stmnt : INAME $$28 l_par args r_par $$29 . Stmnt  (152)
+
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	ELSE  shift 147
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	.  error
+
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	varref  goto 494
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Stmnt  goto 495
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 473
+	Stmnt : varref ASGN INAME $$30 l_par args . r_par $$31 Stmnt  (155)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 496
+
+
+state 474
+	margs : expr l_par arg . r_par  (258)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 497
+
+
+state 475
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+	rarg : EVAL l_par expr . r_par  (262)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  shift 132
+	.  error
+
+	r_par  goto 498
+
+
+state 476
+	rargs : l_par rargs r_par .  (268)
+
+	.  reduce 268
+
+
+state 477
+	rargs : rarg ',' rargs .  (266)
+
+	.  reduce 266
+
+
+state 478
+	rargs : rarg l_par rargs . r_par  (267)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 499
+
+
+state 479
+	Stmnt : varref RCV $$22 LT rargs GT .  (137)
+
+	.  reduce 137
+
+
+state 480
+	Stmnt : varref R_RCV $$23 LT rargs GT .  (139)
+
+	.  reduce 139
+
+
+state 481
+	for_post : '{' . sequence OS '}'  (106)
+	vis : .  (67)
+
+	error  shift 139
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	GOTO  shift 145
+	BREAK  shift 146
+	ELSE  shift 147
+	IF  shift 148
+	DO  shift 149
+	FOR  shift 150
+	SELECT  shift 151
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	HIDDEN  shift 11
+	SHOW  shift 12
+	ISLOCAL  shift 13
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	XU  shift 158
+	NAME  shift 159
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	TYPE  reduce 67
+	UNAME  reduce 67
+
+	one_decl  goto 162
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	sequence  goto 500
+	step  goto 167
+	stmnt  goto 168
+	vis  goto 34
+	varref  goto 169
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Special  goto 171
+	Stmnt  goto 172
+	for_pre  goto 173
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 482
+	Special : for_pre IN varref r_par $$18 for_post .  (114)
+
+	.  reduce 114
+
+
+state 483
+	Special : for_pre ':' expr DOTDOT expr r_par . $$17 for_post  (112)
+	$$17 : .  (111)
+
+	.  reduce 111
+
+	$$17  goto 501
+
+
+state 484
+	Opt_enabler : PROVIDED . l_par full_expr r_par  (245)
+	Opt_enabler : PROVIDED . error  (246)
+
+	error  shift 502
+	'('  shift 57
+	.  error
+
+	l_par  goto 503
+
+
+state 485
+	proc : inst proctype NAME $$1 l_par decl r_par $$2 Opt_priority Opt_enabler . body  (19)
+
+	'{'  shift 65
+	.  error
+
+	body  goto 504
+
+
+state 486
+	basetype : error .  (249)
+
+	.  reduce 249
+
+
+state 487
+	basetype : TYPE .  (247)
+
+	.  reduce 247
+
+
+state 488
+	basetype : UNAME .  (248)
+
+	.  reduce 248
+
+
+state 489
+	ch_init : '[' const_expr ']' OF '{' typ_list . '}'  (90)
+
+	'}'  shift 505
+	.  error
+
+
+state 490
+	typ_list : basetype .  (250)
+	typ_list : basetype . ',' typ_list  (251)
+
+	','  shift 506
+	'}'  reduce 250
+
+
+state 491
+	expr : RUN aname $$33 l_par args r_par Opt_priority .  (201)
+
+	.  reduce 201
+
+
+state 492
+	expr : l_par expr ARROW expr ':' expr r_par .  (199)
+
+	.  reduce 199
+
+
+state 493
+	Special : SELECT l_par varref ':' expr DOTDOT expr . r_par  (115)
+	expr : expr . '+' expr  (178)
+	expr : expr . '-' expr  (179)
+	expr : expr . '*' expr  (180)
+	expr : expr . '/' expr  (181)
+	expr : expr . '%' expr  (182)
+	expr : expr . '&' expr  (183)
+	expr : expr . '^' expr  (184)
+	expr : expr . '|' expr  (185)
+	expr : expr . GT expr  (186)
+	expr : expr . LT expr  (187)
+	expr : expr . GE expr  (188)
+	expr : expr . LE expr  (189)
+	expr : expr . EQ expr  (190)
+	expr : expr . NE expr  (191)
+	expr : expr . AND expr  (192)
+	expr : expr . OR expr  (193)
+	expr : expr . LSHIFT expr  (194)
+	expr : expr . RSHIFT expr  (195)
+	ltl_expr : expr . UNTIL expr  (224)
+	ltl_expr : expr . RELEASE expr  (225)
+	ltl_expr : expr . WEAK_UNTIL expr  (226)
+	ltl_expr : expr . IMPLIES expr  (227)
+	ltl_expr : expr . EQUIV expr  (228)
+
+	IMPLIES  shift 210
+	EQUIV  shift 211
+	OR  shift 212
+	AND  shift 213
+	UNTIL  shift 214
+	WEAK_UNTIL  shift 215
+	RELEASE  shift 216
+	'|'  shift 217
+	'^'  shift 218
+	'&'  shift 219
+	EQ  shift 220
+	NE  shift 221
+	GT  shift 222
+	LT  shift 223
+	GE  shift 224
+	LE  shift 225
+	LSHIFT  shift 226
+	RSHIFT  shift 227
+	'+'  shift 228
+	'-'  shift 229
+	'*'  shift 230
+	'/'  shift 231
+	'%'  shift 232
+	')'  shift 132
+	.  error
+
+	r_par  goto 507
+
+
+state 494
+	Stmnt : varref . ASGN full_expr  (124)
+	Stmnt : varref . INCR  (125)
+	Stmnt : varref . DECR  (126)
+	Stmnt : varref . R_RCV $$21 rargs  (135)
+	Stmnt : varref . RCV $$22 LT rargs GT  (137)
+	Stmnt : varref . R_RCV $$23 LT rargs GT  (139)
+	Stmnt : varref . O_SND $$24 margs  (141)
+	Stmnt : varref . ASGN INAME $$30 l_par args r_par $$31 Stmnt  (155)
+	expr : varref . RCV $$34 '[' rargs ']'  (206)
+	expr : varref . R_RCV $$35 '[' rargs ']'  (208)
+	expr : varref .  (209)
+
+	ASGN  shift 264
+	O_SND  shift 266
+	RCV  shift 508
+	R_RCV  shift 268
+	INCR  shift 269
+	DECR  shift 270
+	SEMI  reduce 209
+	ARROW  reduce 209
+	FI  reduce 209
+	OD  reduce 209
+	SEP  reduce 209
+	UNLESS  reduce 209
+	IMPLIES  reduce 209
+	EQUIV  reduce 209
+	OR  reduce 209
+	AND  reduce 209
+	UNTIL  reduce 209
+	WEAK_UNTIL  reduce 209
+	RELEASE  reduce 209
+	'|'  reduce 209
+	'^'  reduce 209
+	'&'  reduce 209
+	EQ  reduce 209
+	NE  reduce 209
+	GT  reduce 209
+	LT  reduce 209
+	GE  reduce 209
+	LE  reduce 209
+	LSHIFT  reduce 209
+	RSHIFT  reduce 209
+	'+'  reduce 209
+	'-'  reduce 209
+	'*'  reduce 209
+	'/'  reduce 209
+	'%'  reduce 209
+	'}'  reduce 209
+
+
+state 495
+	Stmnt : INAME $$28 l_par args r_par $$29 Stmnt .  (152)
+
+	.  reduce 152
+
+
+state 496
+	Stmnt : varref ASGN INAME $$30 l_par args r_par . $$31 Stmnt  (155)
+	$$31 : .  (154)
+
+	.  reduce 154
+
+	$$31  goto 509
+
+
+state 497
+	margs : expr l_par arg r_par .  (258)
+
+	.  reduce 258
+
+
+state 498
+	rarg : EVAL l_par expr r_par .  (262)
+
+	.  reduce 262
+
+
+state 499
+	rargs : rarg l_par rargs r_par .  (267)
+
+	.  reduce 267
+
+
+state 500
+	sequence : sequence . MS step  (59)
+	for_post : '{' sequence . OS '}'  (106)
+	OS : .  (161)
+
+	SEMI  shift 8
+	ARROW  shift 9
+	'}'  reduce 161
+
+	semi  goto 260
+	OS  goto 510
+	MS  goto 262
+
+
+state 501
+	Special : for_pre ':' expr DOTDOT expr r_par $$17 . for_post  (112)
+
+	'{'  shift 481
+	.  error
+
+	for_post  goto 511
+
+
+state 502
+	Opt_enabler : PROVIDED error .  (246)
+
+	.  reduce 246
+
+
+state 503
+	Opt_enabler : PROVIDED l_par . full_expr r_par  (245)
+
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	GET_P  shift 110
+	PC_VAL  shift 111
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	.  error
+
+	l_par  goto 163
+	full_expr  goto 512
+	cexpr  goto 125
+	varref  goto 126
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 504
+	proc : inst proctype NAME $$1 l_par decl r_par $$2 Opt_priority Opt_enabler body .  (19)
+
+	.  reduce 19
+
+
+state 505
+	ch_init : '[' const_expr ']' OF '{' typ_list '}' .  (90)
+
+	.  reduce 90
+
+
+state 506
+	typ_list : basetype ',' . typ_list  (251)
+
+	error  shift 486
+	TYPE  shift 487
+	UNAME  shift 488
+	.  error
+
+	typ_list  goto 513
+	basetype  goto 490
+
+
+state 507
+	Special : SELECT l_par varref ':' expr DOTDOT expr r_par .  (115)
+
+	.  reduce 115
+
+
+state 508
+	Stmnt : varref RCV . $$22 LT rargs GT  (137)
+	expr : varref RCV . $$34 '[' rargs ']'  (206)
+	$$22 : .  (136)
+	$$34 : .  (205)
+
+	LT  reduce 136
+	'['  reduce 205
+
+	$$22  goto 362
+	$$34  goto 300
+
+
+state 509
+	Stmnt : varref ASGN INAME $$30 l_par args r_par $$31 . Stmnt  (155)
+
+	ASSERT  shift 140
+	PRINT  shift 141
+	PRINTM  shift 142
+	C_CODE  shift 2
+	C_DECL  shift 3
+	C_EXPR  shift 106
+	RUN  shift 107
+	LEN  shift 108
+	ENABLED  shift 109
+	SET_P  shift 143
+	GET_P  shift 110
+	PC_VAL  shift 111
+	RETURN  shift 144
+	ELSE  shift 147
+	ATOMIC  shift 152
+	D_STEP  shift 153
+	TIMEOUT  shift 112
+	NONPROGRESS  shift 113
+	FULL  shift 154
+	EMPTY  shift 155
+	NFULL  shift 156
+	NEMPTY  shift 157
+	CONST  shift 114
+	NAME  shift 115
+	PNAME  shift 116
+	INAME  shift 160
+	SND  shift 117
+	ALWAYS  shift 118
+	EVENTUALLY  shift 119
+	NEXT  shift 120
+	'-'  shift 121
+	'~'  shift 122
+	'('  shift 57
+	'{'  shift 161
+	.  error
+
+	l_par  goto 163
+	full_expr  goto 164
+	ccode  goto 165
+	cexpr  goto 125
+	varref  goto 494
+	expr  goto 170
+	cmpnd  goto 128
+	pfld  goto 129
+	Stmnt  goto 514
+	ltl_expr  goto 130
+	Expr  goto 174
+	Probe  goto 175
+
+
+state 510
+	for_post : '{' sequence OS . '}'  (106)
+
+	'}'  shift 515
+	.  error
+
+
+state 511
+	Special : for_pre ':' expr DOTDOT expr r_par $$17 for_post .  (112)
+
+	.  reduce 112
+
+
+state 512
+	Opt_enabler : PROVIDED l_par full_expr . r_par  (245)
+
+	')'  shift 132
+	.  error
+
+	r_par  goto 516
+
+
+state 513
+	typ_list : basetype ',' typ_list .  (251)
+
+	.  reduce 251
+
+
+state 514
+	Stmnt : varref ASGN INAME $$30 l_par args r_par $$31 Stmnt .  (155)
+
+	.  reduce 155
+
+
+state 515
+	for_post : '{' sequence OS '}' .  (106)
+
+	.  reduce 106
+
+
+state 516
+	Opt_enabler : PROVIDED l_par full_expr r_par .  (245)
+
+	.  reduce 245
+
+
+115 terminals, 105 nonterminals
+272 grammar rules, 517 states
