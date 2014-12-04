@@ -1,10 +1,24 @@
-proctype two(int x; int y) {
-	if
-	:: (x > y && x == 6) -> printf("yes, %d\n", x/2);
-	:: else -> printf("no\n");
-	fi
+proctype two() {
+	int num = 0;
+	do
+	:: (num == 0) ->
+		printf("==0\n"); 
+		break;
+	:: else ->
+		if 
+		:: (num != 1) -> 
+			printf("!=1\n");
+			break;
+		fi;
+	od;
+}
+
+proctype selfIncrease(int n) {
+	printf("Original value:%d\n", n);
+	n++;
+	printf("After n++:%d\n", n);
 }
 
 init {
-	run two(6,4);
+	run selfIncrease(2);
 }
