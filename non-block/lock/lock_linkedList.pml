@@ -160,13 +160,18 @@ proctype delete(int val) {
 	:: atomic{!done[4] && done[3] && done[2] &&
 		  done[1] ->
 		if :: (right == UNDEF || value[right] != val) -> 
+			/* val is not found */
 			printf("delete %d [END]\n", val);
 			
 			lock = 1;
 			break; /* val isn't there  */
 		:: else -> 
 			if :: left == UNDEF ->
-				head = UNDEF;
+				if :: right == UNDEF ->
+					head = UNDEF;
+				:: else ->
+					head = next[right];
+				fi
 			:: else ->
 				next[left] = next[right];
 			fi
@@ -194,9 +199,34 @@ init {
 		run insert(5);
 		//run delete(4);
 	};
+
+	timeout -> atomic {
+		run printlist();
+	}
+
 	timeout -> atomic {
 		run delete(4);
-		run delete(0);
+		run delete(10);
+	};
+
+	timeout -> atomic {
+		run printlist();
 	};
 }
 
+proctype printlist() {
+	byte t = head;
+
+	printf("*** print list ***\n");
+
+	do
+	:: t == UNDEF -> 
+		break;
+	:: else ->
+		printf("cell[%d]:\n", t);
+		printf("value: %d, next: %d\n\n", value[t], next[t]);
+		t = next[t];
+	od
+	
+	printf("*** print list {END} ***\n");
+}
