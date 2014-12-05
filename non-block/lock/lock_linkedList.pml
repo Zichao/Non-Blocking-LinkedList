@@ -44,11 +44,14 @@ proctype search(chan in_left; chan in_right; byte val) {
 	byte left  = UNDEF;
 	byte right = UNDEF;
 
+	printf("searching %d, head:%d\n", val, head);
 	do
 	:: atomic{!done[1] ->
 		if :: head == UNDEF -> 
 			break; 	
-		:: else -> t = head;
+		:: else -> 
+			t = head;
+			done[1] = 1;
 		fi
 	   }
 	:: atomic{!done[2] && done[1] ->
@@ -61,6 +64,7 @@ proctype search(chan in_left; chan in_right; byte val) {
 		fi
 	   }
 	od
+	printf("search %d[END]\n", val);
 	
 	in_left  ! left;
 	in_right ! right;
@@ -75,23 +79,32 @@ proctype insert(byte val) {
 	
 	do
 	:: atomic{!done[1] ->
+		printf("1. insert %d\n", val);
 		if :: top == 0 ->
                         break; /* list is full {may return FALSE} */
                 :: else -> done[1] = TRUE;
                 fi
 	   }
 	:: atomic{!done[2] && done[1] && lock == 1 ->
+		printf("2. insert %d\n", val);
 		lock = 0; done[2] = TRUE;
 	   }
 	:: atomic{!done[3] && done[2] && done[1] ->
+		printf("3. insert %d\n", val);
+		
 		run search(ret_left, ret_right, val);
+		printf("waiting......\n");
 		ret_left  ? left;
 		ret_right ? right;
+		printf("waiting[END]\n");
 		done[3] = TRUE;
 	   }
 	:: atomic{!done[4] && done[3] && done[2] &&
 		  done[1] ->
+                printf("4. insert %d\n", val);
+
 		if :: (right != UNDEF && value[right] == val) ->
+			printf("insert %d [END]\n", val);
 			lock = 1;
 			break; /* do not insert any duplicate */
 		:: else ->
@@ -102,6 +115,9 @@ proctype insert(byte val) {
 	    }
 	:: atomic{!done[5] && done[4] && done[3] &&
 		  done[2] && done[1] ->
+                printf("5. insert %d\n", val);
+
+
 		next[curr] = right;
 		if :: left == UNDEF ->
 			head = curr;
@@ -109,6 +125,8 @@ proctype insert(byte val) {
 			next[left] = curr;
 		fi
 		done[5] = TRUE;
+
+		printf("insert %d [END]\n", val);
 		lock = 1;
 		break; 
 	    }
@@ -123,11 +141,14 @@ proctype delete(int val) {
 
 	do
 	:: atomic{!done[1] ->
-		if :: top == LISTSIZE -> break; /* list is empty {may return FALSE} */
+		if :: top == LISTSIZE -> 
+			printf("delete %d, the list is empty[END]\n", val);
+			break; /* list is empty {may return FALSE} */
 		:: else -> done[1] = TRUE;
 		fi
 	   }
 	:: atomic{!done[2] && done[1] && lock == 1 ->
+		printf("delete %d\n", val);
 		lock = 0; done[2] = TRUE;
 	   }
 	:: atomic{!done[3] && done[2] && done[1] ->
@@ -139,6 +160,9 @@ proctype delete(int val) {
 	:: atomic{!done[4] && done[3] && done[2] &&
 		  done[1] ->
 		if :: (right == UNDEF || value[right] != val) -> 
+			printf("delete %d [END]\n", val);
+			
+			lock = 1;
 			break; /* val isn't there  */
 		:: else -> 
 			if :: left == UNDEF ->
@@ -152,12 +176,27 @@ proctype delete(int val) {
 	    }
 	:: atomic{!done[5] && done[4] && done[3] &&
 		  done[2] && done[1] ->
+		printf("delete %d [END]\n", val);
+
 		lock = 1;
+		done[5] = TRUE;
+		break;
 	    }
 	od
 }
 
 init {
 	run initlist();
-	timeout -> atomic{run insert(10); run delete(0)};
+	timeout -> atomic{
+		run insert(10); 
+		run insert(4); 
+		//run delete(0);
+		run insert(5);
+		//run delete(4);
+	};
+	timeout -> atomic {
+		run delete(4);
+		run delete(0);
+	};
 }
+
